@@ -9,10 +9,13 @@ import { entrar } from "../actions";
 export function FormularioLogin() {
   // useActionState liga o formulario a Server Action e guarda a resposta (erro, valores)
   const [estado, acao] = useActionState(entrar, {});
-  const linkInvalido = useSearchParams().get("aviso") === "link-invalido";
+  const busca = useSearchParams();
+  const linkInvalido = busca.get("aviso") === "link-invalido";
+  const proximo = busca.get("proximo");
 
   return (
     <form action={acao} className="flex flex-col gap-5">
+      {proximo && <input type="hidden" name="proximo" value={proximo} />}
       {linkInvalido && !estado.erro && (
         <Aviso tipo="erro">
           Este link expirou ou já foi usado. Entre com sua senha ou peça um novo link.

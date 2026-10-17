@@ -14,18 +14,5 @@ export function mensagemDeErro(codigo?: string) {
   return (codigo && MENSAGENS[codigo]) || "Algo deu errado. Tente novamente em instantes.";
 }
 
-// Estado que as Server Actions devolvem para o formulario mostrar
-export type EstadoFormulario = {
-  erro?: string;
-  sucesso?: string;
-  // Valores digitados, para o formulario nao "apagar" tudo quando ha erro
-  valores?: Record<string, string>;
-};
-
-export function lerCampo(formData: FormData, nome: string) {
-  const valor = formData.get(nome);
-  return typeof valor === "string" ? valor.trim() : "";
-}
-
-export const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export { EMAIL_VALIDO, lerCampo, type EstadoFormulario } from "@/lib/formulario";
 export const SENHA_MINIMA = 8;

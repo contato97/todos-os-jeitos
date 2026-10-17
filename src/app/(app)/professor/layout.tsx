@@ -10,6 +10,7 @@ export default function LayoutProfessor({ children }: LayoutProps<"/professor">)
         <Navegacao
           rotulo="Área do professor"
           itens={[
+            { href: "/professor", rotulo: "Painel", exato: true },
             { href: "/professor/alunos", rotulo: "Meus alunos" },
             { href: "/professor/ajuda", rotulo: "Ajuda" },
             { href: "/professor/conta", rotulo: "Minha conta" },

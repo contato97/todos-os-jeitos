@@ -2,10 +2,11 @@
 
 // Server Actions: funcoes que rodam no servidor quando o formulario e enviado.
 // A senha vai direto do servidor para o Supabase e nunca e guardada por nos.
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AREA_DO_PERFIL } from "@/lib/auth";
+import { destinoSeguro } from "@/lib/formulario";
 import { ATUACOES, CARGOS, ETAPAS, REDES, valorValido } from "@/lib/opcoes-cadastro";
+import { enderecoDoSite } from "@/lib/site";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import {
   EMAIL_VALIDO,
@@ -15,13 +16,6 @@ import {
   type EstadoFormulario,
 } from "./mensagens";
 
-// Endereco do site (localhost em desenvolvimento, o dominio real em producao),
-// usado nos links que o Supabase envia por e-mail
-async function enderecoDoSite() {
-  const h = await headers();
-  return h.get("origin") ?? `https://${h.get("host")}`;
-}
-
 function lerSenha(formData: FormData, nome = "senha") {
   const valor = formData.get(nome);
   return typeof valor === "string" ? valor : "";
@@ -30,6 +24,7 @@ function lerSenha(formData: FormData, nome = "senha") {
 export async function entrar(_: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
   const email = lerCampo(formData, "email").toLowerCase();
   const senha = lerSenha(formData);
+  const proximo = destinoSeguro(lerCampo(formData, "proximo"));
   const valores = { email };
 
   if (!EMAIL_VALIDO.test(email) || !senha) {
@@ -39,6 +34,8 @@ export async function entrar(_: EstadoFormulario, formData: FormData): Promise<E
   const supabase = await criarClienteServidor();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
   if (error) return { erro: mensagemDeErro(error.code), valores };
+
+  if (proximo) redirect(proximo);
 
   // O mesmo cliente ja esta com a sessao nova, entao o RLS libera o proprio perfil
   const { data: perfil } = await supabase
@@ -64,6 +61,7 @@ export async function cadastrar(
   const atuacao = lerCampo(formData, "atuacao");
   // So da escola
   const cargo = lerCampo(formData, "cargo");
+  const proximo = destinoSeguro(lerCampo(formData, "proximo"));
 
   const valores = { tipo, nome, escola, email, rede, etapas: etapas.join(","), atuacao, cargo };
 
@@ -99,7 +97,7 @@ export async function cadastrar(
     options: {
       // Estes dados sao lidos pelo gatilho do banco que cria o perfil
       data: dadosPerfil,
-      emailRedirectTo: `${await enderecoDoSite()}/auth/confirmar`,
+      emailRedirectTo: `${await enderecoDoSite()}/auth/confirmar${proximo ? `?proximo=${encodeURIComponent(proximo)}` : ""}`,
     },
   });
   if (error) return { erro: mensagemDeErro(error.code), valores };

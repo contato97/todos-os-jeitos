@@ -37,6 +37,49 @@ export function Campo({ rotulo, dica, id, ...props }: CampoProps) {
   );
 }
 
+type AreaTextoProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  rotulo: string;
+  dica?: string;
+};
+
+export function AreaTexto({ rotulo, dica, id, rows = 4, ...props }: AreaTextoProps) {
+  const idGerado = useId();
+  const idCampo = id ?? idGerado;
+  const idDica = dica ? `${idCampo}-dica` : undefined;
+
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={idCampo} className="font-medium">
+        {rotulo}
+      </label>
+      {dica && (
+        <p id={idDica} className="text-base">
+          {dica}
+        </p>
+      )}
+      <textarea
+        id={idCampo}
+        rows={rows}
+        aria-describedby={idDica}
+        className="rounded-xl border-2 border-marca/25 bg-white px-4 py-3 text-marca focus:border-petroleo"
+        {...props}
+      />
+    </div>
+  );
+}
+
+export function CaixaMarcar({ rotulo, dica, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { rotulo: string; dica?: string }) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3">
+      <input type="checkbox" className="mt-1 size-5 shrink-0 accent-petroleo" {...props} />
+      <span>
+        <span className="font-medium">{rotulo}</span>
+        {dica && <span className="block text-base">{dica}</span>}
+      </span>
+    </label>
+  );
+}
+
 // Campo de senha com botao "Mostrar": ajuda quem tem dificuldade de digitar
 // sem ver o que escreveu
 export function CampoSenha({ rotulo, dica, ...props }: CampoProps) {
@@ -77,13 +120,32 @@ export function CampoSenha({ rotulo, dica, ...props }: CampoProps) {
 
 // Botao que mostra "Enviando..." e fica desativado enquanto o servidor responde,
 // para a pessoa nao clicar duas vezes
-export function BotaoEnviar({ children, enviando }: { children: React.ReactNode; enviando: string }) {
+export function BotaoEnviar({
+  children,
+  enviando,
+  secundario = false,
+  name,
+  value,
+}: {
+  children: React.ReactNode;
+  enviando: string;
+  secundario?: boolean;
+  name?: string;
+  value?: string;
+}) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
+      name={name}
+      value={value}
       disabled={pending}
-      className="rounded-full bg-marca px-6 py-3 font-medium text-creme hover:bg-petroleo disabled:opacity-70"
+      aria-busy={pending}
+      className={
+        secundario
+          ? "rounded-full px-6 py-3 font-medium ring-2 ring-marca hover:bg-marca/5 disabled:opacity-70"
+          : "rounded-full bg-marca px-6 py-3 font-medium text-creme hover:bg-petroleo disabled:opacity-70"
+      }
     >
       {pending ? enviando : children}
     </button>

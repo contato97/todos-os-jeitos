@@ -204,5 +204,30 @@ await deveFalhar("professor nao envia para a pasta de outro", profA,
   `insert into storage.objects (bucket_id, name) values ('atividades', $1)`, [`${profB.id}/prova.pdf`]);
 confere("professor B nao ve arquivo de A", (await comoUsuario(profB, `select * from storage.objects`)).length === 0);
 
+// ---------- Convite visto pelo link e boas-vindas ----------
+console.log("\nConvite pelo link e boas-vindas");
+const [novoConvite] = await comoUsuario(profA,
+  `insert into convites (tipo, email, aluno_id) values ('familia', 'pai.da.lia@teste.com', $1) returning token`, [aluno.id]);
+const [visto] = await comoUsuario(null, `select * from ver_convite($1)`, [novoConvite.token]);
+confere("visitante ve que o convite e valido", visto?.valido === true && visto.tipo === "familia");
+confere("e-mail aparece mascarado", visto?.email_dica === "pa***@teste.com", visto?.email_dica);
+confere("aparece so o primeiro nome do aluno", visto?.aluno_primeiro_nome === "Lia");
+const [usado] = await comoUsuario(null, `select * from ver_convite($1)`, [convite.token]);
+confere("convite ja usado aparece como invalido", usado?.valido === false);
+confere("token inexistente nao devolve nada",
+  (await comoUsuario(null, `select * from ver_convite($1)`, [crypto.randomUUID()])).length === 0);
+await deveFalhar("visitante nao le a tabela de convites", null, `select * from convites`);
+const [primeira] = await comoUsuario(profA, `select marcar_boas_vindas() as enviar`);
+const [segunda] = await comoUsuario(profA, `select marcar_boas_vindas() as enviar`);
+confere("boas-vindas so na primeira vez", primeira.enviar === true && segunda.enviar === false);
+
+// ---------- Consentimento pendente ----------
+console.log("\nConsentimento pendente");
+const tia = await criarConta("pai.da.lia@teste.com", { tipo: "familia", nome: "Pai da Lia", convite: novoConvite.token });
+const pend = await comoUsuario(tia, `select * from consentimentos_pendentes()`);
+confere("familia ve so o primeiro nome antes de consentir", pend.length === 1 && pend[0].primeiro_nome === "Lia");
+confere("a ficha completa continua bloqueada", (await comoUsuario(tia, `select * from alunos`)).length === 0);
+confere("professor nao tem pendencias de familia", (await comoUsuario(profA, `select * from consentimentos_pendentes()`)).length === 0);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

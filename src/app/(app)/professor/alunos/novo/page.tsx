@@ -1,23 +1,22 @@
+import Link from "next/link";
 import { ComoUsar } from "@/components/area/como-usar";
+import { Cartao } from "@/components/ui";
 import { AJUDA_PROFESSOR } from "@/lib/ajuda";
-import { EmBreve } from "@/components/area/em-breve";
+import { FormularioAluno } from "../formulario-aluno";
 
 export default function NovoAluno() {
   return (
     <>
-      <h1 className="text-3xl font-semibold">Novo aluno</h1>
+      <Link href="/professor/alunos" className="underline underline-offset-4">
+        ← Meus alunos
+      </Link>
+      <h1 className="mt-4 text-3xl font-semibold">Novo aluno</h1>
       <div className="mt-6">
         <ComoUsar secao={AJUDA_PROFESSOR.novoAluno} />
       </div>
-      <div className="mt-8">
-        <EmBreve titulo="Cadastro do perfil vivo (etapa 3)">
-          <p>
-            Nome, ano escolar, interesses, pontos fortes, o que funciona, o que trava, como prefere
-            receber instruções e sensibilidades sensoriais.
-          </p>
-          <p>Informações de saúde ficam num campo opcional, que só você vê e que nunca vai para a IA.</p>
-        </EmBreve>
-      </div>
+      <Cartao className="max-w-3xl">
+        <FormularioAluno modo="novo" />
+      </Cartao>
     </>
   );
 }

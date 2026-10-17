@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useActionState, useState } from "react";
 import { Aviso, BotaoEnviar, Campo, CampoSenha } from "@/components/formulario";
 import { ATUACOES, CARGOS, ETAPAS, REDES } from "@/lib/opcoes-cadastro";
@@ -18,6 +19,7 @@ const ESTILO_OPCAO =
 export function FormularioCadastro() {
   const [estado, acao] = useActionState(cadastrar, {});
   const [tipo, setTipo] = useState<string>("professor");
+  const proximo = useSearchParams().get("proximo");
 
   if (estado.sucesso) {
     return <Aviso tipo="sucesso">{estado.sucesso}</Aviso>;
@@ -25,6 +27,7 @@ export function FormularioCadastro() {
 
   return (
     <form action={acao} className="flex flex-col gap-6">
+      {proximo && <input type="hidden" name="proximo" value={proximo} />}
       {estado.erro && <Aviso tipo="erro">{estado.erro}</Aviso>}
 
       {/* fieldset + legend agrupam as opcoes: o leitor de tela anuncia a pergunta */}

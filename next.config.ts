@@ -3,6 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
+  experimental: {
+    serverActions: {
+      // PDFs de atividade e fotos de licao chegam a 10 MB (+ folga do envio)
+      bodySizeLimit: "11mb",
+    },
+  },
   partialPrefetching: true,
   turbopack: {
     // Fixa a raiz no projeto: existe um package-lock.json solto na pasta do usuario

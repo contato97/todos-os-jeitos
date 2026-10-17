@@ -73,6 +73,50 @@ function montar({ site, saudacao, paragrafos, tituloLista, lista, listaNumerada,
   return { html, texto };
 }
 
+export function conviteFamilia({ quemConvida, aluno, link, site }: { quemConvida: string; aluno: string; link: string; site: string }): Email {
+  const a = seguro(aluno);
+  return {
+    assunto: `Convite para acompanhar ${aluno} na Todos os Jeitos`,
+    ...montar({
+      site,
+      saudacao: "Olá!",
+      paragrafos: [
+        `${seguro(quemConvida)} convidou você para acompanhar ${a} na Todos os Jeitos, a plataforma que a escola usa para apoiar cada aluno do jeito dele.`,
+      ],
+      tituloLista: "Com o seu acesso, você vai poder:",
+      lista: [
+        "ver o que a escola compartilhar sobre o dia a dia;",
+        "contar como foi em casa;",
+        "receber apoio para o reforço e a lição de casa.",
+      ],
+      destaque: "O convite vale por 7 dias. Use este mesmo e-mail para criar sua conta.",
+      botao: { texto: "Aceitar convite", href: link },
+    }),
+  };
+}
+
+export function conviteProfessor({ escola, link, site }: { escola: string; link: string; site: string }): Email {
+  return {
+    assunto: `${escola} convidou você para a Todos os Jeitos`,
+    ...montar({
+      site,
+      saudacao: "Olá!",
+      paragrafos: [
+        // Sem artigo antes do nome: "a Colegio X" ficaria errado
+        `${seguro(escola)} usa a Todos os Jeitos para acompanhar a inclusão e convidou você para fazer parte.`,
+      ],
+      tituloLista: "O que muda para você:",
+      lista: [
+        "você continua dono(a) dos seus alunos e do seu trabalho;",
+        "a coordenação acompanha, só para leitura, os alunos e o que já foi revisado;",
+        "informações de saúde e anotações do dia a dia continuam só com você.",
+      ],
+      destaque: "O convite vale por 7 dias. Se ainda não tem conta, crie uma com este mesmo e-mail.",
+      botao: { texto: "Ver convite", href: link },
+    }),
+  };
+}
+
 export function boasVindasProfessor({ nome, site }: { nome: string; site: string }): Email {
   const n = seguro(nome);
   return {
