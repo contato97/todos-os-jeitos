@@ -6,7 +6,8 @@ import { Aviso } from "@/components/formulario";
 import { BOTAO_SECUNDARIO, Cartao, formatarData } from "@/components/ui";
 import { AJUDA_PROFESSOR } from "@/lib/ajuda";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { apagarAluno } from "../../acoes";
+import { apagarAluno, apagarDocumento } from "../../acoes";
+import { FormularioDocumentos } from "./formulario-documentos";
 import { FormularioAluno } from "../formulario-aluno";
 
 const SECOES = [
@@ -34,15 +35,26 @@ async function Conteudo({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
-  const { novo, editar } = await searchParams;
+  const { novo, editar, aviso } = await searchParams;
   const supabase = await criarClienteServidor();
-  const [{ data: aluno }, { data: saude }, { count: obsCount }, { count: ativCount }] = await Promise.all([
+  const [{ data: aluno }, { data: saude }, { count: obsCount }, { count: ativCount }, { data: documentos }] = await Promise.all([
     supabase.from("alunos").select("*").eq("id", id).maybeSingle(),
     supabase.from("alunos_saude").select("informacoes").eq("aluno_id", id).maybeSingle(),
     supabase.from("observacoes").select("*", { count: "exact", head: true }).eq("aluno_id", id),
     supabase.from("atividades").select("*", { count: "exact", head: true }).eq("aluno_id", id),
+    supabase
+      .from("alunos_documentos")
+      .select("id, nome_original, descricao, caminho, tipo, tamanho, created_at")
+      .eq("aluno_id", id)
+      .order("created_at", { ascending: false }),
   ]);
   if (!aluno) return null;
+
+  // Links temporarios (10 min) para abrir os documentos do bucket privado
+  const { data: links } = documentos?.length
+    ? await supabase.storage.from("documentos").createSignedUrls(documentos.map((d) => d.caminho), 600)
+    : { data: [] };
+  const linkDe = new Map((links ?? []).map((l) => [l.path, l.signedUrl]));
 
   if (editar) {
     return (
@@ -62,6 +74,11 @@ async function Conteudo({
   return (
     <>
       <ComoUsar secao={AJUDA_PROFESSOR.perfil} />
+      {aviso === "documento" && (
+        <div className="mb-4">
+          <Aviso tipo="erro">O aluno foi cadastrado, mas um documento não pôde ser anexado. Tente de novo no cartão “Saúde”.</Aviso>
+        </div>
+      )}
       {novo && (
         <div className="mb-6">
           <Aviso tipo="sucesso">
@@ -122,8 +139,45 @@ async function Conteudo({
 
           <Cartao>
             <h2 className="text-lg font-semibold">Saúde</h2>
-            <p className="mt-1 text-base">Só você vê. Nunca vai para a IA.</p>
+            <p className="mt-1 text-base">Só você vê, inclusive os documentos. Nada daqui vai para a IA.</p>
             <p className="mt-2 whitespace-pre-line">{saude?.informacoes || <em>Nada registrado.</em>}</p>
+
+            <h3 className="mt-5 font-semibold">Documentos</h3>
+            {!documentos?.length ? (
+              <p className="mt-1 text-base">Nenhum documento anexado.</p>
+            ) : (
+              <ul className="mt-2 space-y-3">
+                {documentos.map((d) => (
+                  <li key={d.id} className="rounded-xl bg-creme/60 p-3">
+                    <p className="break-all font-medium">{d.nome_original}</p>
+                    {d.descricao && <p className="text-base">{d.descricao}</p>}
+                    <p className="text-sm">
+                      {d.tipo === "application/pdf" ? "PDF" : d.tipo.startsWith("image/") ? "Foto" : "Word"} ·{" "}
+                      {d.tamanho > 1048576 ? `${(d.tamanho / 1048576).toFixed(1)} MB` : `${Math.ceil(d.tamanho / 1024)} KB`} ·{" "}
+                      {formatarData(d.created_at)}
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-3">
+                      {linkDe.get(d.caminho) && (
+                        <a href={linkDe.get(d.caminho)!} target="_blank" rel="noopener noreferrer" className="text-base underline underline-offset-4">
+                          Abrir
+                        </a>
+                      )}
+                      <form action={apagarDocumento.bind(null, d.id)}>
+                        <button type="submit" className="text-base underline underline-offset-4">
+                          Apagar
+                        </button>
+                      </form>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <details className="mt-4">
+              <summary className="cursor-pointer font-medium underline underline-offset-4">Anexar documentos</summary>
+              <div className="mt-3">
+                <FormularioDocumentos alunoId={id} />
+              </div>
+            </details>
           </Cartao>
 
           <details className="rounded-2xl p-2">

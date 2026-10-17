@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { AreaTexto, Aviso, BotaoEnviar, Campo } from "@/components/formulario";
+import { CampoDocumentos } from "@/components/area/campo-documentos";
 import { salvarAluno } from "../acoes";
 
 export type DadosAluno = Partial<
@@ -27,7 +28,7 @@ const ETAPAS = [
   { titulo: "Quem é o aluno", descricao: "O básico para identificar." },
   { titulo: "Como aprende", descricao: "O coração do perfil vivo: escreva com exemplos do dia a dia." },
   { titulo: "Comunicação e sentidos", descricao: "Como receber instruções e o que incomoda no ambiente." },
-  { titulo: "Saúde (opcional)", descricao: "Só você vê. Nunca é enviado para a IA." },
+  { titulo: "Saúde (opcional)", descricao: "Só você vê, inclusive os documentos anexados. Nada daqui é enviado para a IA." },
 ];
 
 export function FormularioAluno({ aluno, modo }: { aluno?: DadosAluno; modo: "novo" | "editar" }) {
@@ -110,6 +111,8 @@ export function FormularioAluno({ aluno, modo }: { aluno?: DadosAluno; modo: "no
         <p>{ETAPAS[3].descricao}</p>
         <AreaTexto rotulo="Informações de saúde informadas pela família" name="saude" defaultValue={v("saude")} rows={3}
           dica="Só registre o que a família compartilhou (por exemplo, um laudo). Nunca suposições." />
+        {/* Na edicao, os documentos ficam na pagina do aluno (com lista e opcao de apagar) */}
+        {emEtapas && <CampoDocumentos />}
       </fieldset>
 
       <div className="flex flex-wrap gap-3">

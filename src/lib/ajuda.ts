@@ -47,6 +47,11 @@ export const AJUDA_PROFESSOR = {
         resposta:
           "Não é obrigatório. A plataforma trabalha pelo perfil, não pelo rótulo. Se a família compartilhou um laudo, você pode registrar no campo opcional de saúde, que só você vê e que nunca é enviado para a IA.",
       },
+      {
+        pergunta: "Posso anexar laudos e relatórios de profissionais de saúde?",
+        resposta:
+          "Sim: PDF, foto ou Word, na etapa “Saúde” do cadastro ou depois, no cartão “Saúde” do perfil. São dados sensíveis: só você acessa (nem a escola nem a família veem), eles nunca vão para a IA e, nas fotos, apagamos dados escondidos como a localização.",
+      },
     ],
   },
   perfil: {

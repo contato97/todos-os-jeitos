@@ -4,6 +4,7 @@
 // pedido com o id de outro aluno, o banco recusa.
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import { apagarArquivosDoAluno, guardarDocumentos } from "@/lib/documentos";
 import { ErroArquivo, LIMITE_ARQUIVOS, LIMITE_TOTAL, prepararArquivo, type ArquivoPreparado } from "@/lib/arquivos";
 import { ErroIA, perguntarIA } from "@/lib/ia/cliente";
 import { mencionaDiagnostico, AVISO_DIAGNOSTICO } from "@/lib/ia/diagnostico";
@@ -53,6 +54,18 @@ export async function salvarAluno(_: EstadoFormulario, formData: FormData): Prom
     .from("alunos_saude")
     .upsert({ aluno_id: alunoId, informacoes: saude || null }, { onConflict: "aluno_id" });
 
+  // Documentos anexados (laudos, relatorios): bucket privado, so o professor
+  const documentos = formData.getAll("documentos").filter((a): a is File => a instanceof File && a.size > 0);
+  if (documentos.length) {
+    const { data: claims } = await supabase.auth.getClaims();
+    const erroDocs = await guardarDocumentos(supabase, claims!.claims.sub as string, alunoId, documentos);
+    if (erroDocs) {
+      // O aluno ja foi salvo: avisamos do documento sem perder o cadastro
+      if (!id) redirect(`/professor/alunos/${alunoId}?novo=1&aviso=documento`);
+      return { erro: erroDocs, valores };
+    }
+  }
+
   if (!id) redirect(`/professor/alunos/${alunoId}?novo=1`);
   refresh();
   return { sucesso: "Perfil atualizado.", valores };
@@ -60,8 +73,33 @@ export async function salvarAluno(_: EstadoFormulario, formData: FormData): Prom
 
 export async function apagarAluno(alunoId: string) {
   const supabase = await criarClienteServidor();
+  await apagarArquivosDoAluno(supabase, alunoId);
   await supabase.from("alunos").delete().eq("id", alunoId);
   redirect("/professor/alunos");
+}
+
+// ---------------------------------------------------------------- Documentos do aluno
+
+export async function anexarDocumentos(alunoId: string, _: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
+  const documentos = formData.getAll("documentos").filter((a): a is File => a instanceof File && a.size > 0);
+  const descricao = lerCampo(formData, "descricao");
+  if (!documentos.length) return { erro: "Escolha pelo menos um arquivo." };
+
+  const supabase = await criarClienteServidor();
+  const { data: claims } = await supabase.auth.getClaims();
+  const erro = await guardarDocumentos(supabase, claims?.claims?.sub as string, alunoId, documentos, descricao);
+  if (erro) return { erro };
+  refresh();
+  return { sucesso: documentos.length > 1 ? "Documentos anexados." : "Documento anexado." };
+}
+
+export async function apagarDocumento(documentoId: string) {
+  const supabase = await criarClienteServidor();
+  const { data: doc } = await supabase.from("alunos_documentos").select("caminho").eq("id", documentoId).maybeSingle();
+  if (!doc) return;
+  await supabase.from("alunos_documentos").delete().eq("id", documentoId);
+  await supabase.storage.from("documentos").remove([doc.caminho]);
+  refresh();
 }
 
 // ---------------------------------------------------------------- Observacoes

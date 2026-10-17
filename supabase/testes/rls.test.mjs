@@ -246,5 +246,21 @@ confere("professor envia a propria foto", true);
 await deveFalhar("ninguem envia foto na pasta de outro", profB,
   `insert into storage.objects (bucket_id, name) values ('fotos', $1)`, [`${profA.id}/x.webp`]);
 
+// ---------- Documentos do aluno (dado sensivel) ----------
+console.log("\nDocumentos do aluno");
+await comoUsuario(profA, `insert into alunos_documentos (aluno_id, nome_original, caminho, tipo, tamanho)
+  values ($1, 'laudo.pdf', $2, 'application/pdf', 1000)`, [aluno.id, `${profA.id}/${aluno.id}/laudo.pdf`]);
+confere("professor ve o documento do proprio aluno", (await comoUsuario(profA, `select * from alunos_documentos`)).length === 1);
+confere("outro professor NAO ve", (await comoUsuario(profB, `select * from alunos_documentos`)).length === 0);
+confere("familia NAO ve (mesmo com consentimento)", (await comoUsuario(mae, `select * from alunos_documentos`)).length === 0);
+confere("escola NAO ve (mesmo vinculada)", (await comoUsuario(escola, `select * from alunos_documentos`)).length === 0);
+await deveFalhar("outro professor nao anexa documento no aluno de A", profB,
+  `insert into alunos_documentos (aluno_id, nome_original, caminho, tipo, tamanho, professor_id)
+   values ($1, 'x.pdf', 'x/x.pdf', 'application/pdf', 1, $2)`, [aluno.id, profB.id]);
+await deveFalhar("professor nao troca o arquivo de um documento", profA, `update alunos_documentos set caminho = 'outro'`);
+await comoUsuario(profA, `insert into storage.objects (bucket_id, name) values ('documentos', $1)`, [`${profA.id}/${aluno.id}/laudo.pdf`]);
+confere("familia NAO acessa o arquivo no storage",
+  (await comoUsuario(mae, `select * from storage.objects where bucket_id = 'documentos'`)).length === 0);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);
