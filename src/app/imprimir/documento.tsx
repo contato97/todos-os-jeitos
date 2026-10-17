@@ -15,7 +15,7 @@ export function Documento({
   rodape?: string;
 }) {
   return (
-    <main className="mx-auto w-full max-w-3xl bg-white px-8 py-10 print:max-w-none print:px-0 print:py-0">
+    <main className="sempre-claro mx-auto w-full max-w-3xl bg-white px-8 py-10 print:max-w-none print:px-0 print:py-0">
       <div className="nao-imprimir mb-8 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-creme p-4">
         <p>
           Para salvar em PDF: clique em <strong>Imprimir</strong> e escolha <strong>“Salvar como PDF”</strong>.

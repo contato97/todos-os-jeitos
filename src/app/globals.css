@@ -19,6 +19,69 @@
   --font-sans: var(--font-lexend), system-ui, sans-serif;
 }
 
+/*
+  Modo escuro. As mesmas "variaveis de cor" ganham outros valores, entao todo o
+  site muda junto, sem reescrever cada tela:
+  - creme (fundo da pagina) vira um azul-petroleo bem escuro
+  - white (cartoes e campos) vira um tom um pouco mais claro que o fundo
+  - marca (texto e botoes) vira um tom claro
+  - as cores de destaque ficam um pouco mais claras para manter o contraste
+  Ele segue a preferencia do sistema, a menos que a pessoa escolha no botao
+  (data-tema="claro" ou "escuro" no <html>).
+*/
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --color-creme: #0f1d24;
+    --color-white: #17303b;
+    --color-marca: #e6eff1;
+    --color-petroleo: #7cc4d6;
+    --color-mostarda: #f0b955;
+    --color-coral: #ef8a70;
+    --color-lavanda: #a99ad6;
+    --color-salvia: #8db392;
+    color-scheme: dark;
+  }
+}
+:root[data-tema="escuro"] {
+  --color-creme: #0f1d24;
+  --color-white: #17303b;
+  --color-marca: #e6eff1;
+  --color-petroleo: #7cc4d6;
+  --color-mostarda: #f0b955;
+  --color-coral: #ef8a70;
+  --color-lavanda: #a99ad6;
+  --color-salvia: #8db392;
+  color-scheme: dark;
+}
+
+/* Trechos que precisam ficar sempre claros (folha impressa, imagem baixada) */
+.sempre-claro {
+  --color-creme: #fcf5e6;
+  --color-white: #ffffff;
+  --color-marca: #0e4357;
+  --color-petroleo: #12708a;
+  --color-mostarda: #eaa632;
+  --color-coral: #e86c4d;
+  --color-lavanda: #8c7bc4;
+  --color-salvia: #6b9070;
+  color-scheme: light;
+  background: #ffffff;
+  color: #0e4357;
+}
+
+/* Logo: uma versao para cada tema (o texto da logo e azul-marinho) */
+.logo-escura {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) .logo-clara { display: none; }
+  :root:not([data-tema="claro"]) .logo-escura { display: block; }
+}
+:root[data-tema="escuro"] .logo-clara { display: none; }
+:root[data-tema="escuro"] .logo-escura { display: block; }
+.sempre-claro .logo-clara { display: block !important; }
+.sempre-claro .logo-escura { display: none !important; }
+
 html {
   scroll-behavior: smooth;
 }

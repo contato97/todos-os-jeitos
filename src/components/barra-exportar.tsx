@@ -121,7 +121,7 @@ export function BarraExportar({
 
       {/* "Folha" fora da tela: e o que vira imagem e o que e copiado com formatacao */}
       <div aria-hidden="true" className="pointer-events-none fixed -left-[10000px] top-0">
-        <div ref={folha} className="w-[800px] bg-white p-12 text-[18px] leading-relaxed text-marca">
+        <div ref={folha} className="sempre-claro w-[800px] bg-white p-12 text-[18px] leading-relaxed text-marca">
           <div className="mb-6 flex items-center justify-between border-b border-marca/20 pb-4">
             <span className="text-base">{nomeAluno ? `Aluno(a): ${nomeAluno}` : ""}</span>
             {/* eslint-disable-next-line @next/next/no-img-element -- precisa ser <img> simples para virar imagem */}

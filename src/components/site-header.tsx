@@ -2,7 +2,8 @@
 
 // "use client": este componente roda no navegador porque o menu do celular
 // precisa lembrar se esta aberto ou fechado (useState).
-import Image from "next/image";
+import { BotaoTema } from "./botao-tema";
+import { Logo } from "./logo";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -21,14 +22,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-20 border-b border-marca/10 bg-creme/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <Link href="/" aria-label="Todos os Jeitos, página inicial" className="shrink-0">
-          <Image
-            src="/logo.png"
-            alt=""
-            width={1082}
-            height={380}
-            priority
-            className="h-12 w-auto sm:h-14"
-          />
+          <Logo prioridade className="h-12 w-auto sm:h-14" />
         </Link>
 
         {/* Computador: tudo visivel em uma linha */}
@@ -44,6 +38,7 @@ export function SiteHeader() {
           </ul>
         </nav>
         <div className="hidden items-center gap-2 lg:flex">
+          <BotaoTema />
           <Link href="/login" className="rounded-full px-4 py-2 font-medium hover:bg-marca/5">
             Entrar
           </Link>
@@ -56,15 +51,18 @@ export function SiteHeader() {
         </div>
 
         {/* Celular e tablet: botao que abre o menu */}
-        <button
+        <div className="flex items-center gap-2 lg:hidden">
+          <BotaoTema />
+          <button
           type="button"
-          className="rounded-full px-4 py-2 font-medium ring-2 ring-marca lg:hidden"
+          className="rounded-full px-4 py-2 font-medium ring-2 ring-marca"
           aria-expanded={aberto}
           aria-controls="menu-celular"
           onClick={() => setAberto(!aberto)}
         >
           {aberto ? "Fechar" : "Menu"}
         </button>
+        </div>
       </div>
 
       {aberto && (

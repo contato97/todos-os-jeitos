@@ -1,7 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Avatar } from "@/components/avatar";
+import { BotaoTema } from "@/components/botao-tema";
+import { Logo } from "@/components/logo";
 import { AREA_DO_PERFIL, buscarUsuario } from "@/lib/auth";
 import { urlDaFoto } from "@/lib/foto";
 import { sair } from "../(auth)/actions";
@@ -13,13 +14,16 @@ export default function LayoutLogado({ children }: LayoutProps<"/">) {
       <header className="border-b border-marca/10">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <Link href="/" aria-label="Todos os Jeitos, página inicial" className="shrink-0">
-            <Image src="/logo.png" alt="" width={1082} height={380} priority className="h-12 w-auto" />
+            <Logo prioridade />
           </Link>
           {/* Ler o usuario depende da requisicao, entao fica dentro do Suspense:
               o resto da pagina aparece na hora e o nome chega logo depois */}
-          <Suspense>
-            <MenuUsuario />
-          </Suspense>
+          <div className="flex items-center gap-3">
+            <BotaoTema />
+            <Suspense>
+              <MenuUsuario />
+            </Suspense>
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">{children}</main>
