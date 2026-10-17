@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/*
+  Cores da marca Todos os Jeitos.
+  Contraste sobre o fundo creme (#FCF5E6):
+  - marca (#0E4357) e petroleo (#12708A) passam no WCAG AA para texto.
+  - mostarda, coral, lavanda e salvia NAO passam para texto pequeno:
+    use apenas como detalhe (bordas, icones, faixas), nunca como cor de texto.
+*/
+@theme {
+  --color-marca: #0e4357;
+  --color-creme: #fcf5e6;
+  --color-petroleo: #12708a;
+  --color-mostarda: #eaa632;
+  --color-coral: #e86c4d;
+  --color-lavanda: #8c7bc4;
+  --color-salvia: #6b9070;
+
+  --font-sans: var(--font-lexend), system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-creme);
+  color: var(--color-marca);
+}
+
+/* Foco sempre visivel para quem navega pelo teclado */
+:focus-visible {
+  outline: 3px solid var(--color-petroleo);
+  outline-offset: 2px;
+}
+
+/* Respeita quem pediu ao sistema para reduzir movimento */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
