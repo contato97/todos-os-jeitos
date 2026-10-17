@@ -13,7 +13,7 @@ export default function LayoutEscola({ children }: LayoutProps<"/escola">) {
             { href: "/escola", rotulo: "Visão geral", exato: true },
             { href: "/escola/professores", rotulo: "Professores" },
             { href: "/escola/alunos", rotulo: "Alunos" },
-            { href: "/escola/ajuda", rotulo: "Ajuda" },
+            { href: "/escola/ajuda", rotulo: "Central de ajuda" },
             { href: "/escola/conta", rotulo: "Minha conta" },
           ]}
         />

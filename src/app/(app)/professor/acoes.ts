@@ -4,10 +4,12 @@
 // pedido com o id de outro aluno, o banco recusa.
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import { ErroArquivo, LIMITE_ARQUIVOS, LIMITE_TOTAL, prepararArquivo, type ArquivoPreparado } from "@/lib/arquivos";
 import { ErroIA, perguntarIA } from "@/lib/ia/cliente";
 import { mencionaDiagnostico, AVISO_DIAGNOSTICO } from "@/lib/ia/diagnostico";
 import { SCHEMA_RELATORIO, SISTEMA_ADAPTAR, SISTEMA_RELATORIO, descreverPerfil } from "@/lib/ia/prompts";
 import { lerCampo, type EstadoFormulario } from "@/lib/formulario";
+import { PRIORIDADES_ADAPTACAO } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
 const CAMPOS_PERFIL = [
@@ -19,8 +21,6 @@ const CAMPOS_PERFIL = [
   "comunicacao",
   "sensorial",
 ] as const;
-
-const PDF_MAXIMO = 10 * 1024 * 1024;
 
 // ---------------------------------------------------------------- Alunos
 
@@ -110,44 +110,57 @@ export async function adaptarAtividade(
 ): Promise<EstadoFormulario> {
   const titulo = lerCampo(formData, "titulo");
   const texto = lerCampo(formData, "texto");
-  const arquivo = formData.get("arquivo");
-  const temPdf = arquivo instanceof File && arquivo.size > 0;
-  const valores = { titulo, texto };
+  const orientacoes = lerCampo(formData, "orientacoes");
+  const prioridades = formData.getAll("prioridades").map(String);
+  const arquivos = formData.getAll("arquivos").filter((a): a is File => a instanceof File && a.size > 0);
+  const valores = { titulo, texto, orientacoes, prioridades: prioridades.join(",") };
 
   if (!titulo) return { erro: "Dê um título para a atividade.", valores };
-  if (!texto && !temPdf) return { erro: "Cole o texto da atividade ou envie um PDF.", valores };
-  if (temPdf && (arquivo.type !== "application/pdf" || arquivo.size > PDF_MAXIMO)) {
-    return { erro: "Envie um arquivo PDF de até 10 MB.", valores };
+  if (!texto && arquivos.length === 0) {
+    return { erro: "Cole o texto da atividade ou envie um arquivo (foto, PDF ou Word).", valores };
+  }
+  if (arquivos.length > LIMITE_ARQUIVOS) return { erro: `Envie no máximo ${LIMITE_ARQUIVOS} arquivos.`, valores };
+  if (arquivos.reduce((t, a) => t + a.size, 0) > LIMITE_TOTAL) {
+    return { erro: "Os arquivos passam de 10 MB no total. Envie menos páginas ou fotos menores.", valores };
   }
 
   const supabase = await criarClienteServidor();
   const { data: aluno } = await supabase.from("alunos").select("*").eq("id", alunoId).maybeSingle();
   if (!aluno) return { erro: "Aluno não encontrado.", valores };
 
-  // Guarda o PDF original na pasta do professor (bucket privado)
-  let caminho: string | null = null;
-  let pdfBase64: string | null = null;
-  if (temPdf) {
-    const bytes = Buffer.from(await arquivo.arrayBuffer());
-    pdfBase64 = bytes.toString("base64");
-    caminho = `${aluno.professor_id}/${crypto.randomUUID()}.pdf`;
-    const { error } = await supabase.storage.from("atividades").upload(caminho, bytes, { contentType: "application/pdf" });
-    if (error) caminho = null;
+  // Le cada arquivo no formato que a IA entende
+  let preparados: ArquivoPreparado[];
+  try {
+    preparados = await Promise.all(arquivos.map(prepararArquivo));
+  } catch (e) {
+    return { erro: e instanceof ErroArquivo ? e.message : "Não conseguimos ler um dos arquivos.", valores };
   }
+
+  const pedidos = PRIORIDADES_ADAPTACAO.filter((p) => prioridades.includes(p.valor)).map((p) => `- ${p.instrucao}`);
+  const pedidoProfessor = [
+    pedidos.length ? `Prioridades do professor:\n${pedidos.join("\n")}` : "",
+    orientacoes ? `Orientações do professor: ${orientacoes}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   let adaptado: string;
   try {
     adaptado = await perguntarIA({
       sistema: SISTEMA_ADAPTAR,
       conteudo: [
-        ...(pdfBase64
-          ? [{ type: "document" as const, source: { type: "base64" as const, media_type: "application/pdf" as const, data: pdfBase64 } }]
-          : []),
+        ...preparados.flatMap((p) => p.blocos),
         {
           type: "text",
-          text: `Perfil do aluno:\n${descreverPerfil(aluno)}\n\nTítulo da atividade: ${titulo}\n\n${
-            texto ? `Atividade original:\n${texto}` : "A atividade original está no PDF anexado."
-          }`,
+          text: [
+            `Perfil do aluno:\n${descreverPerfil(aluno)}`,
+            `Título da atividade: ${titulo}`,
+            texto ? `Atividade original (texto):\n${texto}` : "",
+            preparados.length ? `A atividade original também está nos ${preparados.length} arquivo(s) anexado(s), na ordem enviada.` : "",
+            pedidoProfessor,
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
         },
       ],
     });
@@ -155,12 +168,29 @@ export async function adaptarAtividade(
     return { erro: e instanceof ErroIA ? e.message : "Erro ao adaptar a atividade.", valores };
   }
 
+  // Guarda os originais na pasta do professor (bucket privado)
+  const caminhos: string[] = [];
+  for (const p of preparados) {
+    const caminho = `${aluno.professor_id}/${crypto.randomUUID()}.${p.guardar.extensao}`;
+    const { error } = await supabase.storage.from("atividades").upload(caminho, p.guardar.bytes, { contentType: p.guardar.tipo });
+    if (!error) caminhos.push(caminho);
+  }
+
   const { data: atividade, error } = await supabase
     .from("atividades")
-    .insert({ aluno_id: alunoId, titulo, texto_original: texto || null, arquivo_original: caminho, conteudo_adaptado: adaptado })
+    .insert({
+      aluno_id: alunoId,
+      titulo,
+      texto_original: texto || null,
+      arquivos_originais: caminhos,
+      orientacoes: pedidoProfessor || null,
+      conteudo_adaptado: adaptado,
+    })
     .select("id")
     .single();
   if (error || !atividade) return { erro: "Não foi possível salvar o rascunho.", valores };
+  // Vindo da tela "Adaptar atividade", o resultado aparece na propria tela
+  if (lerCampo(formData, "retorno") === "adaptar") redirect(`/professor/adaptar?atividade=${atividade.id}`);
   redirect(`/professor/alunos/${alunoId}/atividades/${atividade.id}`);
 }
 

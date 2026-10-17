@@ -1,12 +1,15 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 
 // Cliente do Supabase para o servidor (paginas, Server Actions, rotas).
 // Um cliente novo por requisicao: cada pedido tem os cookies do seu proprio usuario.
 export async function criarClienteServidor() {
-  // Ler os cookies primeiro avisa o Next que a pagina depende da requisicao
-  // (e por isso nao pode ser gerada no build)
+  // connection() avisa o Next que daqui em diante tudo depende da requisicao.
+  // Sem isso, o Next reclama porque o Supabase le a hora atual (para conferir
+  // se o login venceu) numa fase em que a pagina ainda esta sendo pre-montada.
+  await connection();
   const cookieStore = await cookies();
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
     throw new Error(

@@ -15,7 +15,7 @@ export function FormularioFoto({ urlAtual, nome }: { urlAtual: string | null; no
   const iniciais = nome.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+    <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
       {mostrar ? (
         // eslint-disable-next-line @next/next/no-img-element -- previa local (blob:) e link temporario
         <img src={mostrar} alt="Sua foto de perfil" className="size-28 shrink-0 rounded-full object-cover ring-4 ring-white" />
@@ -24,7 +24,7 @@ export function FormularioFoto({ urlAtual, nome }: { urlAtual: string | null; no
           {iniciais}
         </span>
       )}
-      <div className="flex flex-1 flex-col gap-3">
+      <div className="flex w-full min-w-0 flex-1 flex-col gap-3">
         {estado.erro && <Aviso tipo="erro">{estado.erro}</Aviso>}
         {estado.sucesso && <Aviso tipo="sucesso">{estado.sucesso}</Aviso>}
         <form action={acao} className="flex flex-col gap-3">
@@ -40,7 +40,7 @@ export function FormularioFoto({ urlAtual, nome }: { urlAtual: string | null; no
               const arquivo = e.target.files?.[0];
               setPrevia(arquivo ? URL.createObjectURL(arquivo) : null);
             }}
-            className="rounded-xl border-2 border-dashed border-marca/25 bg-white p-3 file:mr-3 file:rounded-full file:border-0 file:bg-marca/10 file:px-4 file:py-2 file:font-medium"
+            className="w-full min-w-0 rounded-xl border-2 border-dashed border-marca/25 bg-white p-3 text-base file:mr-3 file:rounded-full file:border-0 file:bg-marca/10 file:px-4 file:py-2 file:font-medium"
           />
           <div className="flex flex-wrap gap-3">
             <BotaoEnviar enviando="Enviando...">Salvar foto</BotaoEnviar>
@@ -161,8 +161,10 @@ export function FormularioSenha() {
       {estado.erro && <Aviso tipo="erro">{estado.erro}</Aviso>}
       {estado.sucesso && <Aviso tipo="sucesso">{estado.sucesso}</Aviso>}
       <CampoSenha rotulo="Senha atual" name="atual" autoComplete="current-password" required />
-      <CampoSenha rotulo="Nova senha" name="nova" autoComplete="new-password" required minLength={SENHA_MINIMA} dica={`Pelo menos ${SENHA_MINIMA} caracteres.`} />
-      <CampoSenha rotulo="Repita a nova senha" name="confirmacao" autoComplete="new-password" required />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <CampoSenha rotulo="Nova senha" name="nova" autoComplete="new-password" required minLength={SENHA_MINIMA} dica={`Pelo menos ${SENHA_MINIMA} caracteres.`} />
+        <CampoSenha rotulo="Repita a nova senha" name="confirmacao" autoComplete="new-password" required />
+      </div>
       <div>
         <BotaoEnviar enviando="Alterando...">Alterar senha</BotaoEnviar>
       </div>

@@ -19,7 +19,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         ← Atividades
       </Link>
       <h2 className="mb-4 mt-4 text-xl font-semibold">Adaptar nova atividade</h2>
-      <Cartao className="max-w-3xl">
+      <Cartao className="max-w-4xl">
         <FormularioNovaAtividade alunoId={id} />
       </Cartao>
     </>

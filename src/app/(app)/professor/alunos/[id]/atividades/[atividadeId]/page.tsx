@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Carregando } from "@/components/area/em-breve";
-import { BOTAO, Cartao, Etiqueta, formatarData } from "@/components/ui";
+import { BarraExportar } from "@/components/barra-exportar";
+import { Cartao, Etiqueta, formatarData } from "@/components/ui";
 import { AVISO_DIAGNOSTICO, mencionaDiagnostico } from "@/lib/ia/diagnostico";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { apagarAtividade } from "../../../../acoes";
@@ -19,15 +20,16 @@ export default function PaginaAtividade({ params }: PageProps<"/professor/alunos
 async function Conteudo({ params }: { params: Promise<{ id: string; atividadeId: string }> }) {
   const { id, atividadeId } = await params;
   const supabase = await criarClienteServidor();
-  const { data: atividade } = await supabase.from("atividades").select("*").eq("id", atividadeId).maybeSingle();
+  const { data: atividade } = await supabase.from("atividades").select("*, alunos(nome)").eq("id", atividadeId).maybeSingle();
   if (!atividade) notFound();
 
-  // Link temporario (10 min) para abrir o PDF original guardado no bucket privado
-  let linkOriginal: string | null = null;
-  if (atividade.arquivo_original) {
-    const { data } = await supabase.storage.from("atividades").createSignedUrl(atividade.arquivo_original, 600);
-    linkOriginal = data?.signedUrl ?? null;
-  }
+  // Links temporarios (10 min) para abrir os arquivos originais guardados no bucket privado
+  const caminhos: string[] = [...(atividade.arquivos_originais ?? []), ...(atividade.arquivo_original ? [atividade.arquivo_original] : [])];
+  const { data: assinados } = caminhos.length
+    ? await supabase.storage.from("atividades").createSignedUrls(caminhos, 600)
+    : { data: [] };
+  const originais = (assinados ?? []).flatMap((a, i) => (a.signedUrl ? [{ url: a.signedUrl, nome: rotuloArquivo(a.path ?? "", i) }] : []));
+  const aluno = Array.isArray(atividade.alunos) ? atividade.alunos[0] : atividade.alunos;
   const revisada = atividade.status === "revisado";
 
   return (
@@ -58,21 +60,39 @@ async function Conteudo({ params }: { params: Promise<{ id: string; atividadeId:
             </div>
             <p className="mt-2 text-base">Criada em {formatarData(atividade.created_at)}</p>
             {revisada ? (
-              <Link href={`/imprimir/atividade/${atividade.id}`} target="_blank" className={`${BOTAO} mt-4 w-full`}>
-                Exportar PDF
-              </Link>
+              <div className="mt-4">
+                <h3 className="mb-2 font-semibold">Baixar e compartilhar</h3>
+                <BarraExportar
+                  atividadeId={atividade.id}
+                  titulo={atividade.titulo}
+                  texto={atividade.conteudo_adaptado ?? ""}
+                  nomeAluno={aluno?.nome}
+                />
+              </div>
             ) : (
-              <p className="mt-4 text-base">O PDF fica disponível depois da revisão.</p>
+              <p className="mt-4 text-base">Copiar, Word, PDF e imagem ficam disponíveis depois da revisão.</p>
             )}
           </Cartao>
 
-          {(atividade.texto_original || linkOriginal) && (
+          {(atividade.texto_original || originais.length > 0) && (
             <Cartao>
               <h2 className="text-lg font-semibold">Atividade original</h2>
-              {linkOriginal && (
-                <a href={linkOriginal} target="_blank" rel="noopener noreferrer" className="mt-2 block underline underline-offset-4">
-                  Abrir PDF original
-                </a>
+              {originais.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {originais.map((o) => (
+                    <li key={o.url}>
+                      <a href={o.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+                        {o.nome}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {atividade.orientacoes && (
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-base underline underline-offset-4">O que você pediu à IA</summary>
+                  <p className="mt-2 whitespace-pre-line text-base">{atividade.orientacoes}</p>
+                </details>
               )}
               {atividade.texto_original && (
                 <p className="mt-2 max-h-80 overflow-y-auto whitespace-pre-line text-base">{atividade.texto_original}</p>
@@ -92,4 +112,10 @@ async function Conteudo({ params }: { params: Promise<{ id: string; atividadeId:
       </div>
     </>
   );
+}
+
+function rotuloArquivo(caminho: string, i: number) {
+  const ext = caminho.split(".").pop()?.toLowerCase();
+  const tipo = ext === "pdf" ? "PDF" : ext === "docx" ? "Word" : ext === "txt" ? "Texto" : "Foto";
+  return `${tipo} ${i + 1}`;
 }

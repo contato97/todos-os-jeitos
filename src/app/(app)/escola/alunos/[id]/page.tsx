@@ -67,9 +67,14 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
                 {atividades.map((a) => (
                   <li key={a.id} className="flex flex-wrap justify-between gap-2">
                     <span>{a.titulo}</span>
-                    <Link href={`/imprimir/atividade/${a.id}`} target="_blank" className="underline underline-offset-4">
-                      Ver / PDF
-                    </Link>
+                    <span className="flex gap-3">
+                      <a href={`/exportar/atividade/${a.id}?formato=pdf`} className="underline underline-offset-4">
+                        PDF
+                      </a>
+                      <a href={`/exportar/atividade/${a.id}?formato=word`} className="underline underline-offset-4">
+                        Word
+                      </a>
+                    </span>
                   </li>
                 ))}
               </ul>

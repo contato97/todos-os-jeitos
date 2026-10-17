@@ -11,7 +11,7 @@ export default function LayoutFamilia({ children }: LayoutProps<"/familia">) {
           rotulo="Área da família"
           itens={[
             { href: "/familia", rotulo: "Meus filhos", exato: true },
-            { href: "/familia/ajuda", rotulo: "Ajuda" },
+            { href: "/familia/ajuda", rotulo: "Central de ajuda" },
             { href: "/familia/conta", rotulo: "Minha conta" },
           ]}
         />

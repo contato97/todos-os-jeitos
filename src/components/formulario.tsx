@@ -18,7 +18,7 @@ export function Campo({ rotulo, dica, id, ...props }: CampoProps) {
   const idDica = dica ? `${idCampo}-dica` : undefined;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <label htmlFor={idCampo} className="font-medium">
         {rotulo}
       </label>
@@ -48,7 +48,7 @@ export function AreaTexto({ rotulo, dica, id, rows = 4, ...props }: AreaTextoPro
   const idDica = dica ? `${idCampo}-dica` : undefined;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <label htmlFor={idCampo} className="font-medium">
         {rotulo}
       </label>
@@ -88,11 +88,11 @@ export function CampoSenha({ rotulo, dica, ...props }: CampoProps) {
   const idDica = dica ? `${id}-dica` : undefined;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1">
       <label htmlFor={id} className="font-medium">
         {rotulo}
       </label>
-      <div className="flex rounded-xl border-2 border-marca/25 bg-white focus-within:border-petroleo">
+      <div className="flex min-w-0 rounded-xl border-2 border-marca/25 bg-white focus-within:border-petroleo">
         <input
           id={id}
           type={visivel ? "text" : "password"}

@@ -5,6 +5,20 @@ export type Pergunta = { pergunta: string; resposta: string };
 export type SecaoAjuda = { titulo: string; perguntas: Pergunta[] };
 
 export const AJUDA_PROFESSOR = {
+  painel: {
+    titulo: "Painel",
+    perguntas: [
+      {
+        pergunta: "O que o painel mostra?",
+        resposta:
+          "Um resumo do seu acompanhamento: quantos alunos, observações da semana, atividades adaptadas, rascunhos esperando revisão e mensagens que chegaram das famílias. Clique em um número para ir direto ao assunto.",
+      },
+      {
+        pergunta: "O que significa “Registrar algo” ao lado de um aluno?",
+        resposta: "Que faz mais de 14 dias sem observação dele. Um registro rápido ajuda a manter o perfil vivo.",
+      },
+    ],
+  },
   alunos: {
     titulo: "Meus alunos",
     perguntas: [
@@ -104,8 +118,22 @@ export const AJUDA_PROFESSOR = {
       },
     ],
   },
+  comunicacao: {
+    titulo: "Comunicação com a família",
+    perguntas: [
+      {
+        pergunta: "Como mando um recado para a família?",
+        resposta:
+          "Em “Comunicação com a família”, escolha o aluno e escreva o recado. Ele vira uma observação compartilhada e aparece no histórico que a família vê.",
+      },
+      {
+        pergunta: "Onde vejo o que a família contou de casa?",
+        resposta: "Na mesma tela, em “O que chegou de casa”, e também no perfil de cada aluno, com a etiqueta “De casa”.",
+      },
+    ],
+  },
   familia: {
-    titulo: "Família",
+    titulo: "Convidar família",
     perguntas: [
       {
         pergunta: "Como convido a família?",

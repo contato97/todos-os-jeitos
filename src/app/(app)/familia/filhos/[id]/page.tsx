@@ -2,8 +2,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ComoUsar } from "@/components/area/como-usar";
 import { Carregando } from "@/components/area/em-breve";
+import { BarraExportar } from "@/components/barra-exportar";
 import { Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
 import { AJUDA_FAMILIA } from "@/lib/ajuda";
+import { versaoDoAluno } from "@/lib/atividade-texto";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
 // Historico do filho: so o que o professor compartilhou (o RLS garante)
@@ -83,10 +85,10 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
                   <details>
                     <summary className="cursor-pointer text-lg font-semibold">{a.titulo}</summary>
                     <div className="mt-3">
-                      <TextoFormatado texto={a.conteudo_adaptado ?? ""} />
-                      <Link href={`/imprimir/atividade/${a.id}`} target="_blank" className="mt-4 inline-block underline underline-offset-4">
-                        Baixar PDF
-                      </Link>
+                      <TextoFormatado texto={versaoDoAluno(a.conteudo_adaptado ?? "")} />
+                      <div className="mt-5 max-w-sm">
+                        <BarraExportar atividadeId={a.id} titulo={a.titulo} texto={a.conteudo_adaptado ?? ""} />
+                      </div>
                     </div>
                   </details>
                 </Cartao>

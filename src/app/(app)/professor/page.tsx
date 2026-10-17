@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { BOTAO, Cartao, Etiqueta, formatarData } from "@/components/ui";
+import { ComoUsar } from "@/components/area/como-usar";
+import { BOTAO, BOTAO_SECUNDARIO, Cartao, Etiqueta, formatarData } from "@/components/ui";
+import { AJUDA_PROFESSOR } from "@/lib/ajuda";
 import { buscarUsuario } from "@/lib/auth";
 import { diasAtras } from "@/lib/datas";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -33,18 +35,20 @@ export default async function PainelProfessor() {
   const rascunhosAtiv = (atividades ?? []).filter((a) => a.status === "rascunho");
   const rascunhosRel = (relatorios ?? []).filter((r) => r.status === "rascunho");
 
+  const casaSemana = obs.filter((o) => o.origem === "casa" && o.data_observacao >= seteDias).length;
   const numeros = [
-    { rotulo: "Alunos", valor: alunos?.length ?? 0 },
-    { rotulo: "Observações nos últimos 7 dias", valor: obsSemana.length },
-    { rotulo: "Atividades adaptadas", valor: atividades?.length ?? 0 },
-    { rotulo: "Rascunhos para revisar", valor: rascunhosAtiv.length + rascunhosRel.length },
+    { rotulo: "Alunos", valor: alunos?.length ?? 0, href: "/professor/alunos", faixa: "bg-petroleo" },
+    { rotulo: "Observações (7 dias)", valor: obsSemana.filter((o) => o.origem === "escola").length, href: "/professor/alunos", faixa: "bg-salvia" },
+    { rotulo: "Atividades adaptadas", valor: atividades?.length ?? 0, href: "/professor/adaptar", faixa: "bg-lavanda" },
+    { rotulo: "Rascunhos para revisar", valor: rascunhosAtiv.length + rascunhosRel.length, href: "#para-revisar", faixa: "bg-mostarda" },
+    { rotulo: "Mensagens da família (7 dias)", valor: casaSemana, href: "/professor/familias", faixa: "bg-coral" },
   ];
 
   const passos = [
     { feito: (alunos?.length ?? 0) > 0, texto: "Cadastrar o primeiro aluno", href: "/professor/alunos/novo" },
     { feito: obs.length > 0, texto: "Registrar uma observação", href: alunos?.[0] ? `/professor/alunos/${alunos[0].id}/observacoes` : null },
-    { feito: (atividades?.length ?? 0) > 0, texto: "Adaptar uma atividade com a IA", href: alunos?.[0] ? `/professor/alunos/${alunos[0].id}/atividades/nova` : null },
-    { feito: (familias ?? 0) > 0, texto: "Convidar uma família", href: alunos?.[0] ? `/professor/alunos/${alunos[0].id}/familia` : null },
+    { feito: (atividades?.length ?? 0) > 0, texto: "Adaptar uma atividade com a IA", href: alunos?.length ? "/professor/adaptar" : null },
+    { feito: (familias ?? 0) > 0, texto: "Convidar uma família", href: alunos?.length ? "/professor/convidar" : null },
   ];
   const faltam = passos.filter((p) => !p.feito);
 
@@ -59,19 +63,30 @@ export default async function PainelProfessor() {
           <h1 className="text-3xl font-semibold">Olá, {usuario?.nome?.split(" ")[0]}!</h1>
           <p className="mt-1">Um resumo do acompanhamento dos seus alunos.</p>
         </div>
-        <Link href="/professor/alunos/novo" className={BOTAO}>
-          Novo aluno
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/professor/adaptar" className={BOTAO}>
+            Adaptar atividade
+          </Link>
+          <Link href="/professor/alunos/novo" className={BOTAO_SECUNDARIO}>
+            Novo aluno
+          </Link>
+        </div>
       </div>
 
-      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ComoUsar secao={AJUDA_PROFESSOR.painel} />
+      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {numeros.map((n) => (
-          <div key={n.rotulo} className="rounded-2xl bg-white/80 p-5 ring-1 ring-marca/10">
-            <dt>{n.rotulo}</dt>
-            <dd className="mt-1 text-3xl font-semibold">{n.valor}</dd>
-          </div>
+          <li key={n.rotulo}>
+            <Link href={n.href} className="block h-full overflow-hidden rounded-2xl bg-white/80 ring-1 ring-marca/10 hover:ring-petroleo">
+              <span aria-hidden="true" className={`block h-1.5 ${n.faixa}`} />
+              <span className="block p-5">
+                <span className="block text-3xl font-semibold">{n.valor}</span>
+                <span className="mt-1 block">{n.rotulo}</span>
+              </span>
+            </Link>
+          </li>
         ))}
-      </dl>
+      </ul>
 
       {faltam.length > 0 && (
         <Cartao className="mt-6 border-l-4 border-mostarda">
@@ -105,7 +120,7 @@ export default async function PainelProfessor() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Cartao>
-          <h2 className="text-xl font-semibold">Para revisar</h2>
+          <h2 id="para-revisar" className="scroll-mt-24 text-xl font-semibold">Para revisar</h2>
           {rascunhosAtiv.length + rascunhosRel.length === 0 ? (
             <p className="mt-2">Nenhum rascunho esperando revisão.</p>
           ) : (
@@ -130,7 +145,12 @@ export default async function PainelProfessor() {
         </Cartao>
 
         <Cartao>
-          <h2 className="text-xl font-semibold">Chegou de casa</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xl font-semibold">Comunicação com a família</h2>
+            <Link href="/professor/familias" className="underline underline-offset-4">
+              Ver tudo
+            </Link>
+          </div>
           {deCasa.length === 0 ? (
             <p className="mt-2">As observações que as famílias enviarem aparecem aqui.</p>
           ) : (

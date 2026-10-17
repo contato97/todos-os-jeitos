@@ -44,11 +44,16 @@ Regras que você sempre segue:
 export const SISTEMA_ADAPTAR = `${REGRAS_GERAIS}
 
 Sua tarefa: adaptar uma atividade escolar para o aluno descrito no perfil.
+- A atividade original pode vir como texto, PDF, documento ou fotos (inclusive de folhas impressas ou escritas à mão): leia tudo com atenção. Se algo estiver ilegível, sinalize entre colchetes em vez de inventar.
 - Mantenha o objetivo pedagógico e o conteúdo da atividade original.
-- Ajuste a forma: enunciados curtos, uma instrução por vez, apoio visual sugerido entre colchetes, exemplos ligados aos interesses do aluno, divisão em etapas.
+- Ajuste a forma: enunciados curtos, uma instrução por vez, exemplos ligados aos interesses do aluno, divisão em etapas.
 - Evite o que o perfil diz que trava; use o que o perfil diz que funciona.
-- Comece com o título da atividade adaptada. No fim, inclua uma seção "Dicas para o professor" com 2 a 4 sugestões curtas de aplicação.`;
+- Siga as prioridades e orientações do professor, quando houver.
 
+Formato da resposta (importante, porque o professor vai imprimir ou baixar a parte do aluno):
+1. Comece com "# " + título da atividade adaptada.
+2. Em seguida, a atividade para o aluno, pronta para entregar, escrita diretamente para ele.
+3. Por último, uma seção que começa exatamente com a linha "## Dicas para o professor", com 2 a 4 sugestões curtas de aplicação. Não escreva nada depois dela.`;
 export const SISTEMA_RELATORIO = `${REGRAS_GERAIS}
 
 Sua tarefa: escrever um relatório de acompanhamento a partir do perfil e das observações de um período, em duas versões:
