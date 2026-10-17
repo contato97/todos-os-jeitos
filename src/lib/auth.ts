@@ -8,6 +8,7 @@ export type Usuario = {
   id: string;
   tipo: TipoPerfil;
   nome: string;
+  foto: string | null; // caminho no bucket privado "fotos"
 };
 
 // Pagina inicial de cada tipo de perfil
@@ -28,7 +29,7 @@ export async function buscarUsuario(): Promise<Usuario | null> {
   // O RLS garante que esta consulta so devolve o perfil do proprio usuario
   const { data: perfil } = await supabase
     .from("perfis")
-    .select("id, tipo, nome")
+    .select("id, tipo, nome, foto")
     .eq("id", id)
     .single();
 

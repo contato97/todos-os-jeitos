@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
-import { buscarUsuario } from "@/lib/auth";
+import { Avatar } from "@/components/avatar";
+import { AREA_DO_PERFIL, buscarUsuario } from "@/lib/auth";
+import { urlDaFoto } from "@/lib/foto";
 import { sair } from "../(auth)/actions";
 
 // Moldura das areas logadas (professor, escola, familia)
@@ -28,10 +30,18 @@ export default function LayoutLogado({ children }: LayoutProps<"/">) {
 async function MenuUsuario() {
   const usuario = await buscarUsuario();
   if (!usuario) return null;
+  const foto = await urlDaFoto(usuario.foto);
 
   return (
     <div className="flex items-center gap-3">
-      <span className="hidden sm:inline">{usuario.nome}</span>
+      <Link
+        href={`${AREA_DO_PERFIL[usuario.tipo]}/conta`}
+        className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 hover:bg-marca/5"
+        aria-label={`Minha conta (${usuario.nome})`}
+      >
+        <Avatar url={foto} nome={usuario.nome} />
+        <span className="hidden sm:inline">{usuario.nome.split(" ")[0]}</span>
+      </Link>
       <form action={sair}>
         <button type="submit" className="rounded-full px-4 py-2 font-medium ring-2 ring-marca hover:bg-marca/5">
           Sair

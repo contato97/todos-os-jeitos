@@ -229,5 +229,22 @@ confere("familia ve so o primeiro nome antes de consentir", pend.length === 1 &&
 confere("a ficha completa continua bloqueada", (await comoUsuario(tia, `select * from alunos`)).length === 0);
 confere("professor nao tem pendencias de familia", (await comoUsuario(profA, `select * from consentimentos_pendentes()`)).length === 0);
 
+// ---------- Minha conta ----------
+console.log("\nMinha conta");
+await comoUsuario(profA, `update perfis set nome = 'Ana Prof', foto = $1 where id = $2`, [`${profA.id}/perfil.webp`, profA.id]);
+confere("professor edita o proprio nome e foto",
+  (await db.query(`select nome from perfis where id = $1`, [profA.id])).rows[0].nome === "Ana Prof");
+await deveFalhar("ninguem troca o proprio tipo de perfil", profA, `update perfis set tipo = 'escola' where id = $1`, [profA.id]);
+const editouOutro = await comoUsuario(profA, `update perfis set nome = 'x' where id = $1 returning id`, [profB.id]);
+confere("professor nao edita o perfil de outro", editouOutro.length === 0);
+await comoUsuario(profA, `update professores set escola_nome = 'Escola Nova', etapas = '{medio}' where id = $1`, [profA.id]);
+confere("professor edita os proprios dados de cadastro",
+  (await db.query(`select escola_nome from professores where id = $1`, [profA.id])).rows[0].escola_nome === "Escola Nova");
+await deveFalhar("etapa invalida e recusada", profA, `update professores set etapas = '{faculdade}' where id = $1`, [profA.id]);
+await comoUsuario(profA, `insert into storage.objects (bucket_id, name) values ('fotos', $1)`, [`${profA.id}/perfil.webp`]);
+confere("professor envia a propria foto", true);
+await deveFalhar("ninguem envia foto na pasta de outro", profB,
+  `insert into storage.objects (bucket_id, name) values ('fotos', $1)`, [`${profA.id}/x.webp`]);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);
