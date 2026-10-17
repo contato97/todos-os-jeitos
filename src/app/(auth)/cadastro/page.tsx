@@ -1,14 +1,29 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { FormularioCadastro } from "./formulario-cadastro";
 
-// Provisorio: o cadastro de verdade e construido na etapa 2.
+export const metadata: Metadata = { title: "Criar conta | Todos os Jeitos" };
+
 export default function CadastroPage() {
   return (
-    <main className="mx-auto flex max-w-md flex-1 flex-col justify-center gap-4 px-4 py-16 text-center">
+    <>
       <h1 className="text-3xl font-semibold">Criar conta</h1>
-      <p>O cadastro de professores e escolas está em construção.</p>
-      <Link href="/" className="underline underline-offset-4">
-        Voltar para a página inicial
-      </Link>
-    </main>
+      <p className="mt-2">Comece a acompanhar cada aluno do jeito dele.</p>
+
+      <div className="mt-8">
+        <FormularioCadastro />
+      </div>
+
+      <hr className="my-8 border-marca/10" />
+      <p className="text-center">
+        Já tem conta?{" "}
+        <Link href="/login" className="font-medium underline underline-offset-4">
+          Entrar
+        </Link>
+      </p>
+      <p className="mt-3 text-center text-base">
+        É da família? Seu acesso chega por convite do professor, da professora ou da escola.
+      </p>
+    </>
   );
 }

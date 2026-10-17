@@ -1,14 +1,33 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
+import { FormularioLogin } from "./formulario-login";
 
-// Provisorio: o login de verdade e construido na etapa 2.
+export const metadata: Metadata = { title: "Entrar | Todos os Jeitos" };
+
 export default function LoginPage() {
   return (
-    <main className="mx-auto flex max-w-md flex-1 flex-col justify-center gap-4 px-4 py-16 text-center">
+    <>
       <h1 className="text-3xl font-semibold">Entrar</h1>
-      <p>O acesso para professores, famílias e escolas está em construção.</p>
-      <Link href="/" className="underline underline-offset-4">
-        Voltar para a página inicial
-      </Link>
-    </main>
+      <p className="mt-2">Professores, escolas e famílias entram por aqui.</p>
+
+      <div className="mt-8">
+        {/* O formulario le o endereco da pagina (?aviso=...), por isso fica dentro do Suspense */}
+        <Suspense>
+          <FormularioLogin />
+        </Suspense>
+      </div>
+
+      <hr className="my-8 border-marca/10" />
+      <p className="text-center">
+        Ainda não tem conta?{" "}
+        <Link href="/cadastro" className="font-medium underline underline-offset-4">
+          Criar conta
+        </Link>
+      </p>
+      <p className="mt-3 text-center text-base">
+        É da família? Seu acesso chega por convite do professor, da professora ou da escola.
+      </p>
+    </>
   );
 }
