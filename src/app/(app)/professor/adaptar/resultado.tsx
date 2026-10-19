@@ -43,7 +43,7 @@ export async function ResultadoAdaptacao({ atividadeId }: { atividadeId: string 
         <Cartao className="min-w-0">
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-semibold">Adaptada para {aluno?.nome}</h2>
-            {revisada ? <Etiqueta tipo="revisado">Revisada</Etiqueta> : <Etiqueta tipo="rascunho">Rascunho da IA</Etiqueta>}
+            {revisada ? <Etiqueta tipo="revisado">Revisada</Etiqueta> : <Etiqueta tipo="rascunho">Rascunho</Etiqueta>}
           </div>
           {!revisada && (
             <p className="mb-5 rounded-xl bg-mostarda/15 p-4">

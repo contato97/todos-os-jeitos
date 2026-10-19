@@ -44,6 +44,29 @@ export const PRIORIDADES_ADAPTACAO = [
   { valor: "exemplo", rotulo: "Incluir exemplo resolvido", instrucao: "inclua um exemplo resolvido antes das questões" },
 ] as const;
 
+// Reforco em casa (area da familia)
+export const TIPOS_REFORCO = [
+  { valor: "reforco", rotulo: "Reforço de um conteúdo", descricao: "Uma atividade curta para praticar o que está sendo estudado." },
+  { valor: "licao", rotulo: "Ajuda com a lição de casa", descricao: "Entender a lição para guiar, sem dar as respostas." },
+  { valor: "explicar", rotulo: "Outras formas de explicar", descricao: "Jeitos diferentes de ensinar o mesmo conteúdo." },
+  { valor: "material", rotulo: "Material pronto para imprimir", descricao: "Folha de atividade, jogo ou cartões para usar em casa." },
+] as const;
+
+export const MATERIAS = [
+  "Português (leitura e escrita)",
+  "Matemática",
+  "Ciências",
+  "História e Geografia",
+  "Inglês",
+  "Organização e rotina de estudos",
+] as const;
+
+export const TEMPOS_REFORCO = [10, 20, 30] as const;
+
+export function rotuloTipoReforco(tipo: string) {
+  return TIPOS_REFORCO.find((t) => t.valor === tipo)?.rotulo ?? "Reforço";
+}
+
 // Confere se um valor recebido do formulario esta entre as opcoes permitidas
 export function valorValido(opcoes: readonly { valor: string }[], valor: string) {
   return opcoes.some((o) => o.valor === valor);

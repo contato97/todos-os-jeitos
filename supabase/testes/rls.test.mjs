@@ -262,5 +262,16 @@ await comoUsuario(profA, `insert into storage.objects (bucket_id, name) values (
 confere("familia NAO acessa o arquivo no storage",
   (await comoUsuario(mae, `select * from storage.objects where bucket_id = 'documentos'`)).length === 0);
 
+// ---------- Reforco especializado ----------
+console.log("\nReforco especializado");
+await comoUsuario(mae, `insert into reforcos (aluno_id, tipo, materia, tema, tempo_minutos, pedido)
+  values ($1, 'material', 'Matemática', 'frações', 20, 'material com pizza')`, [aluno.id]);
+confere("familia pede material de uma materia", (await comoUsuario(mae, `select * from reforcos where tipo = 'material'`)).length === 1);
+await deveFalhar("tipo desconhecido e recusado", mae,
+  `insert into reforcos (aluno_id, tipo, pedido) values ($1, 'prova', 'x')`, [aluno.id]);
+await deveFalhar("tempo fora do limite e recusado", mae,
+  `insert into reforcos (aluno_id, tipo, tempo_minutos, pedido) values ($1, 'reforco', 300, 'x')`, [aluno.id]);
+confere("professor ve o pedido especializado", (await comoUsuario(profA, `select * from reforcos where tipo = 'material'`)).length === 1);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

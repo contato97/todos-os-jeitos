@@ -1,21 +1,24 @@
 import { Suspense } from "react";
+import { AreaComMenu } from "@/components/area/area-com-menu";
 import { Carregando } from "@/components/area/em-breve";
 import { Guarda } from "@/components/area/guarda";
-import { Navegacao } from "@/components/area/navegacao";
 
 export default function LayoutFamilia({ children }: LayoutProps<"/familia">) {
   return (
     <Suspense fallback={<Carregando />}>
       <Guarda tipo="familia">
-        <Navegacao
+        <AreaComMenu
           rotulo="Área da família"
-          itens={[
-            { href: "/familia", rotulo: "Meus filhos", exato: true },
-            { href: "/familia/ajuda", rotulo: "Central de ajuda" },
-            { href: "/familia/conta", rotulo: "Minha conta" },
+          grupos={[
+            [{ href: "/familia", rotulo: "Meus filhos", icone: "filhos" }],
+            [
+              { href: "/familia/ajuda", rotulo: "Central de ajuda", icone: "ajuda" },
+              { href: "/familia/conta", rotulo: "Minha conta", icone: "conta" },
+            ],
           ]}
-        />
-        <div className="mt-8">{children}</div>
+        >
+          {children}
+        </AreaComMenu>
       </Guarda>
     </Suspense>
   );

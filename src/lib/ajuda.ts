@@ -243,9 +243,14 @@ export const AJUDA_FAMILIA = {
     titulo: "Reforço e lição de casa",
     perguntas: [
       {
-        pergunta: "Como funciona o reforço?",
+        pergunta: "Como funciona a assistente de reforço?",
         resposta:
-          "Você pede uma atividade (por exemplo, “leitura de 15 minutos”) e a IA cria uma proposta pensada para o seu filho, explicando para você como aplicar.",
+          "Você escolhe o que precisa (reforço, ajuda com a lição, outras formas de explicar ou material para imprimir), a matéria, o conteúdo e quanto tempo tem. A assistente usa o perfil do seu filho e devolve um passo a passo para você, jeitos diferentes de ensinar e um material pronto para a criança.",
+      },
+      {
+        pergunta: "Como imprimo o material?",
+        resposta:
+          "Embaixo de cada orientação há “Baixar ou copiar”. Escolha “Material para a criança” para baixar só a folha dela (em PDF, Word ou imagem), sem as orientações para o adulto.",
       },
       {
         pergunta: "A IA faz a lição pelo meu filho?",

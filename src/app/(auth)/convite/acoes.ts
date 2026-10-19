@@ -35,7 +35,7 @@ export async function cadastrarFamilia(token: string, _: EstadoFormulario, formD
   if (senha.length < SENHA_MINIMA) return { erro: `A senha precisa ter pelo menos ${SENHA_MINIMA} caracteres.`, valores };
 
   const supabase = await criarClienteServidor();
-  const { error } = await supabase.auth.signUp({
+  const { data: cadastro, error } = await supabase.auth.signUp({
     email,
     password: senha,
     options: {
@@ -50,5 +50,7 @@ export async function cadastrarFamilia(token: string, _: EstadoFormulario, formD
     }
     return { erro: mensagemDeErro(error.code), valores };
   }
+  // Confirmacao por e-mail desligada (fase de testes): entra direto no consentimento
+  if (cadastro.session) redirect("/familia");
   return { sucesso: `Quase lá! Enviamos um link de confirmação para ${email}. Abra o e-mail para ativar sua conta.` };
 }

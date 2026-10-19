@@ -91,7 +91,7 @@ export async function cadastrar(
   }
 
   const supabase = await criarClienteServidor();
-  const { error } = await supabase.auth.signUp({
+  const { data: cadastro, error } = await supabase.auth.signUp({
     email,
     password: senha,
     options: {
@@ -101,6 +101,10 @@ export async function cadastrar(
     },
   });
   if (error) return { erro: mensagemDeErro(error.code), valores };
+
+  // Se a confirmacao por e-mail estiver desligada no Supabase (fase de testes),
+  // a conta ja vem com sessao: entra direto
+  if (cadastro.session) redirect(proximo ?? AREA_DO_PERFIL[tipo]);
 
   // Por seguranca, o Supabase responde igual se o e-mail ja existir,
   // assim ninguem descobre quais e-mails tem conta. A mensagem tambem e a mesma.

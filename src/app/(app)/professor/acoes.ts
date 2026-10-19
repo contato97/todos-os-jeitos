@@ -232,6 +232,29 @@ export async function adaptarAtividade(
   redirect(`/professor/alunos/${alunoId}/atividades/${atividade.id}`);
 }
 
+// Atividade que a professora ja adaptou por conta propria (sem IA).
+// Entra como rascunho e passa pela mesma revisao antes de exportar.
+export async function criarAtividadeManual(
+  alunoId: string,
+  _: EstadoFormulario,
+  formData: FormData,
+): Promise<EstadoFormulario> {
+  const titulo = lerCampo(formData, "titulo");
+  const conteudo = lerCampo(formData, "conteudo");
+  const valores = { titulo, conteudo };
+  if (!titulo) return { erro: "Dê um título para a atividade.", valores };
+  if (!conteudo) return { erro: "Cole o texto da atividade adaptada.", valores };
+
+  const supabase = await criarClienteServidor();
+  const { data: atividade, error } = await supabase
+    .from("atividades")
+    .insert({ aluno_id: alunoId, titulo, conteudo_adaptado: conteudo, orientacoes: "Adaptação feita pela professora (sem IA)." })
+    .select("id")
+    .single();
+  if (error || !atividade) return { erro: "Não foi possível salvar a atividade.", valores };
+  redirect(`/professor/adaptar?atividade=${atividade.id}`);
+}
+
 export async function salvarAtividade(
   atividadeId: string,
   _: EstadoFormulario,

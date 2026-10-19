@@ -5,6 +5,7 @@ import { FormularioConvite } from "@/components/area/formulario-convite";
 import { BOTAO_DISCRETO, Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
 import { AJUDA_PROFESSOR } from "@/lib/ajuda";
 import { agoraIso } from "@/lib/datas";
+import { rotuloTipoReforco } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { cancelarConvite, convidarFamilia } from "../../../../acoes-convite";
 import { removerFamilia } from "../../../acoes";
@@ -33,7 +34,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
       .order("created_at", { ascending: false }),
     supabase
       .from("reforcos")
-      .select("id, tipo, pedido, resposta, created_at")
+      .select("id, tipo, materia, pedido, resposta, created_at")
       .eq("aluno_id", id)
       .order("created_at", { ascending: false })
       .limit(10),
@@ -120,7 +121,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
                 <li key={r.id}>
                   <Cartao>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Etiqueta tipo="casa">{r.tipo === "licao" ? "Lição de casa" : "Reforço"}</Etiqueta>
+                      <Etiqueta tipo="casa">{rotuloTipoReforco(r.tipo)}{r.materia ? ` · ${r.materia}` : ""}</Etiqueta>
                       <span className="text-base">{formatarData(r.created_at, true)}</span>
                     </div>
                     <p className="mt-2">

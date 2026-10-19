@@ -49,6 +49,11 @@ export async function perguntarIA({
     if (erro instanceof Anthropic.AuthenticationError) {
       throw new ErroIA("A chave da IA é inválida. Confira a ANTHROPIC_API_KEY.");
     }
+    // Conta da Anthropic sem saldo: a API responde 400 com esta explicacao
+    if (erro instanceof Anthropic.BadRequestError && /credit balance/i.test(erro.message)) {
+      console.error("[ia] conta da Anthropic sem creditos");
+      throw new ErroIA("A IA está temporariamente indisponível (conta sem créditos). Avise a equipe da Todos os Jeitos.");
+    }
     if (erro instanceof Anthropic.APIError) {
       console.error("[ia] erro da API:", erro.status, erro.message);
       throw new ErroIA("A IA não conseguiu responder agora. Tente de novo em instantes.");

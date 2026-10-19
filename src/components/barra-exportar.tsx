@@ -3,33 +3,50 @@
 import { toPng } from "html-to-image";
 import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { nomeDeArquivo, temDicas, versaoDoAluno } from "@/lib/atividade-texto";
+import { materialDaCrianca, nomeDeArquivo, temDicas, versaoDoAluno } from "@/lib/atividade-texto";
 
 const BOTAO =
   "inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 font-medium ring-2 ring-marca hover:bg-marca/5 disabled:opacity-60";
 
-// Barra de exportacao da atividade revisada: copiar, Word, PDF, imagem e imprimir.
-// "Versao do aluno" tira a secao "Dicas para o professor".
+// Versoes que cada tipo de conteudo oferece para exportar
+const VERSOES = {
+  // Atividade: "versao do aluno" tira a secao "Dicas para o professor"
+  atividade: [
+    ["aluno", "Versão do aluno"],
+    ["completa", "Com dicas para o professor"],
+  ],
+  // Reforco: so a folha da crianca, ou tudo (com as orientacoes ao adulto)
+  reforco: [
+    ["aluno", "Material para a criança"],
+    ["completa", "Tudo, com as orientações"],
+  ],
+} as const;
+
+// Barra de exportacao: copiar, Word, PDF, imagem e (atividades) imprimir.
 export function BarraExportar({
   atividadeId,
   titulo,
   texto,
   nomeAluno,
   versaoInicial = "aluno",
+  tipo = "atividade",
 }: {
   atividadeId: string;
   titulo: string;
   texto: string;
   nomeAluno?: string;
   versaoInicial?: "aluno" | "completa";
+  tipo?: keyof typeof VERSOES;
 }) {
   const [versao, setVersao] = useState<"aluno" | "completa">(versaoInicial);
   const [mensagem, setMensagem] = useState("");
   const [gerandoImagem, setGerandoImagem] = useState(false);
   const folha = useRef<HTMLDivElement>(null);
   const conteudo = useRef<HTMLDivElement>(null);
-  const comDicas = temDicas(texto);
-  const textoEscolhido = versao === "aluno" ? versaoDoAluno(texto) : texto;
+  const parteDoAluno = tipo === "reforco" ? materialDaCrianca(texto) : temDicas(texto) ? versaoDoAluno(texto) : null;
+  const comVersoes = Boolean(parteDoAluno);
+  const textoEscolhido = versao === "aluno" && parteDoAluno ? parteDoAluno : texto;
+  const base = `/exportar/${tipo}/${atividadeId}`;
   const query = `versao=${versao}`;
   const avisar = (m: string) => {
     setMensagem(m);
@@ -76,14 +93,9 @@ export function BarraExportar({
 
   return (
     <div className="flex flex-col gap-4">
-      {comDicas && (
+      {comVersoes && (
         <div role="radiogroup" aria-label="Qual versão exportar" className="flex flex-wrap gap-2">
-          {(
-            [
-              ["aluno", "Versão do aluno"],
-              ["completa", "Com dicas para o professor"],
-            ] as const
-          ).map(([valor, rotulo]) => (
+          {VERSOES[tipo].map(([valor, rotulo]) => (
             <button
               key={valor}
               type="button"
@@ -102,18 +114,20 @@ export function BarraExportar({
         <button type="button" onClick={copiar} className={BOTAO}>
           Copiar
         </button>
-        <a href={`/exportar/atividade/${atividadeId}?formato=word&${query}`} className={BOTAO}>
+        <a href={`${base}?formato=word&${query}`} className={BOTAO}>
           Word
         </a>
-        <a href={`/exportar/atividade/${atividadeId}?formato=pdf&${query}`} className={BOTAO}>
+        <a href={`${base}?formato=pdf&${query}`} className={BOTAO}>
           PDF
         </a>
         <button type="button" onClick={baixarImagem} disabled={gerandoImagem} className={BOTAO}>
           {gerandoImagem ? "Gerando..." : "Imagem"}
         </button>
-        <a href={`/imprimir/atividade/${atividadeId}?${query}`} target="_blank" className={`${BOTAO} col-span-2`}>
-          Imprimir
-        </a>
+        {tipo === "atividade" && (
+          <a href={`/imprimir/atividade/${atividadeId}?${query}`} target="_blank" className={`${BOTAO} col-span-2`}>
+            Imprimir
+          </a>
+        )}
       </div>
       <p role="status" className="min-h-6 text-base">
         {mensagem}

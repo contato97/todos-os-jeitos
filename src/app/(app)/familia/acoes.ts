@@ -8,6 +8,7 @@ import { boasVindasFamilia } from "@/lib/email/modelos";
 import { lerCampo, type EstadoFormulario } from "@/lib/formulario";
 import { ErroIA, perguntarIA } from "@/lib/ia/cliente";
 import { SISTEMA_REFORCO, descreverPerfil } from "@/lib/ia/prompts";
+import { TEMPOS_REFORCO, TIPOS_REFORCO, rotuloTipoReforco } from "@/lib/opcoes-cadastro";
 import { hoje } from "@/lib/datas";
 import { enderecoDoSite } from "@/lib/site";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -66,13 +67,27 @@ export async function apagarObservacaoCasa(observacaoId: string) {
 }
 
 export async function pedirApoio(alunoId: string, _: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
-  const tipo = lerCampo(formData, "tipo") === "licao" ? "licao" : "reforco";
+  const tipoPedido = lerCampo(formData, "tipo");
+  const tipo = TIPOS_REFORCO.some((t) => t.valor === tipoPedido) ? tipoPedido : "reforco";
+  const materiaEscolhida = lerCampo(formData, "materia");
+  const materia = (materiaEscolhida === "outra" ? lerCampo(formData, "materia_outra") : materiaEscolhida).slice(0, 60);
+  const tema = lerCampo(formData, "tema").slice(0, 200);
+  const tempo = Number(lerCampo(formData, "tempo"));
+  const tempoMinutos = (TEMPOS_REFORCO as readonly number[]).includes(tempo) ? tempo : 20;
   const pedido = lerCampo(formData, "pedido");
   const arquivo = formData.get("foto");
   const temArquivo = arquivo instanceof File && arquivo.size > 0;
-  const valores = { tipo, pedido };
+  const valores = {
+    tipo,
+    pedido,
+    materia: materiaEscolhida,
+    materia_outra: materiaEscolhida === "outra" ? materia : "",
+    tema,
+    tempo: String(tempoMinutos),
+  };
 
-  if (!pedido) return { erro: "Conte o que você precisa.", valores };
+  if (!materia) return { erro: "Escolha a matéria.", valores };
+  if (!tema && !pedido) return { erro: "Conte qual conteúdo vocês estão estudando.", valores };
   if (temArquivo) {
     const ok = arquivo.size <= ARQUIVO_MAXIMO && ([...TIPOS_IMAGEM, "application/pdf"] as string[]).includes(arquivo.type);
     if (!ok) return { erro: "Envie uma foto (JPG, PNG) ou PDF de até 10 MB.", valores };
@@ -119,9 +134,17 @@ export async function pedirApoio(alunoId: string, _: EstadoFormulario, formData:
         ...anexos,
         {
           type: "text",
-          text: `Tipo de pedido: ${tipo === "licao" ? "LIÇÃO DE CASA" : "REFORÇO"}\n\nPerfil da criança:\n${descreverPerfil(aluno)}\n\nO que o adulto pediu:\n${pedido}${
-            anexos.length ? "\n\n(Foto ou PDF da lição anexado.)" : ""
-          }`,
+          text: [
+            `Tipo de pedido: ${rotuloTipoReforco(tipo).toUpperCase()}`,
+            `Matéria: ${materia}`,
+            tema ? `Conteúdo: ${tema}` : "",
+            `Tempo disponível: ${tempoMinutos} minutos`,
+            `Perfil da criança:\n${descreverPerfil(aluno)}`,
+            pedido ? `O que o adulto contou:\n${pedido}` : "",
+            anexos.length ? "(Foto ou PDF da lição anexado.)" : "",
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
         },
       ],
     });
@@ -129,8 +152,17 @@ export async function pedirApoio(alunoId: string, _: EstadoFormulario, formData:
     return { erro: e instanceof ErroIA ? e.message : "Erro ao falar com a IA.", valores };
   }
 
-  const { error } = await supabase.from("reforcos").insert({ aluno_id: alunoId, tipo, pedido, arquivo: caminho, resposta });
+  const { error } = await supabase.from("reforcos").insert({
+    aluno_id: alunoId,
+    tipo,
+    materia,
+    tema: tema || null,
+    tempo_minutos: tempoMinutos,
+    pedido: pedido || tema,
+    arquivo: caminho,
+    resposta,
+  });
   if (error) return { erro: "Não foi possível salvar a resposta.", valores };
   refresh();
-  return { sucesso: "Pronto! A orientação está logo abaixo." };
+  return { sucesso: "Pronto! A orientação e o material estão logo abaixo." };
 }

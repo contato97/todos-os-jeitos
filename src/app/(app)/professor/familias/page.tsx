@@ -4,6 +4,7 @@ import { ComoUsar } from "@/components/area/como-usar";
 import { Carregando } from "@/components/area/em-breve";
 import { BOTAO, Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
 import { AJUDA_PROFESSOR } from "@/lib/ajuda";
+import { rotuloTipoReforco } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { RecadoFamilia } from "./recado-familia";
 
@@ -39,7 +40,7 @@ async function Conteudo() {
       .order("data_observacao", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(20),
-    supabase.from("reforcos").select("id, aluno_id, tipo, pedido, resposta, created_at").order("created_at", { ascending: false }).limit(10),
+    supabase.from("reforcos").select("id, aluno_id, tipo, materia, pedido, resposta, created_at").order("created_at", { ascending: false }).limit(10),
     supabase.from("aluno_familias").select("aluno_id, familia_id, parentesco, consentimento_em, perfis(nome)"),
   ]);
   const nomeAluno = new Map((alunos ?? []).map((a) => [a.id, a.nome]));
@@ -87,7 +88,7 @@ async function Conteudo() {
                   <Cartao>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold">{nomeAluno.get(r.aluno_id)}</span>
-                      <Etiqueta tipo="casa">{r.tipo === "licao" ? "Lição de casa" : "Reforço"}</Etiqueta>
+                      <Etiqueta tipo="casa">{rotuloTipoReforco(r.tipo)}{r.materia ? ` · ${r.materia}` : ""}</Etiqueta>
                       <span className="text-base">{formatarData(r.created_at, true)}</span>
                     </div>
                     <p className="mt-2">“{r.pedido}”</p>

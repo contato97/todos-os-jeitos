@@ -1,23 +1,28 @@
 import { Suspense } from "react";
+import { AreaComMenu } from "@/components/area/area-com-menu";
 import { Carregando } from "@/components/area/em-breve";
 import { Guarda } from "@/components/area/guarda";
-import { Navegacao } from "@/components/area/navegacao";
 
 export default function LayoutEscola({ children }: LayoutProps<"/escola">) {
   return (
     <Suspense fallback={<Carregando />}>
       <Guarda tipo="escola">
-        <Navegacao
+        <AreaComMenu
           rotulo="Área da escola"
-          itens={[
-            { href: "/escola", rotulo: "Visão geral", exato: true },
-            { href: "/escola/professores", rotulo: "Professores" },
-            { href: "/escola/alunos", rotulo: "Alunos" },
-            { href: "/escola/ajuda", rotulo: "Central de ajuda" },
-            { href: "/escola/conta", rotulo: "Minha conta" },
+          grupos={[
+            [
+              { href: "/escola", rotulo: "Visão geral", icone: "painel", exato: true },
+              { href: "/escola/professores", rotulo: "Professores", icone: "professores", destaque: true },
+              { href: "/escola/alunos", rotulo: "Alunos", icone: "alunos" },
+            ],
+            [
+              { href: "/escola/ajuda", rotulo: "Central de ajuda", icone: "ajuda" },
+              { href: "/escola/conta", rotulo: "Minha conta", icone: "conta" },
+            ],
           ]}
-        />
-        <div className="mt-8">{children}</div>
+        >
+          {children}
+        </AreaComMenu>
       </Guarda>
     </Suspense>
   );
