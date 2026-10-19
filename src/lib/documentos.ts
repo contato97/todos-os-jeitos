@@ -6,7 +6,7 @@ import sharp from "sharp";
 // Dado sensivel: bucket privado "documentos", so o professor acessa, NUNCA vai para a IA.
 
 export const DOCUMENTOS_MAXIMO = 5;
-export const DOCUMENTOS_TOTAL = 10 * 1024 * 1024;
+export const DOCUMENTOS_TOTAL = 4 * 1024 * 1024; // por envio (limite do servidor publicado)
 const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 export async function guardarDocumentos(
@@ -18,7 +18,7 @@ export async function guardarDocumentos(
 ): Promise<string | null> {
   if (arquivos.length === 0) return null;
   if (arquivos.length > DOCUMENTOS_MAXIMO) return `Anexe no máximo ${DOCUMENTOS_MAXIMO} documentos por vez.`;
-  if (arquivos.reduce((t, a) => t + a.size, 0) > DOCUMENTOS_TOTAL) return "Os documentos passam de 10 MB no total.";
+  if (arquivos.reduce((t, a) => t + a.size, 0) > DOCUMENTOS_TOTAL) return "Os documentos passam de 4 MB no total. Envie em partes.";
 
   for (const arquivo of arquivos) {
     const nome = arquivo.name.slice(0, 200) || "documento";

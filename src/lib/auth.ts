@@ -41,6 +41,7 @@ export async function buscarUsuario(): Promise<Usuario | null> {
 export async function exigirUsuario(tipo?: TipoPerfil): Promise<Usuario> {
   const usuario = await buscarUsuario();
   if (!usuario) redirect("/login");
-  if (tipo && usuario.tipo !== tipo) redirect(AREA_DO_PERFIL[usuario.tipo]);
+  // Area de outro perfil: volta para a propria, com um aviso explicando o porque
+  if (tipo && usuario.tipo !== tipo) redirect(`${AREA_DO_PERFIL[usuario.tipo]}?aviso=area-de-${tipo}`);
   return usuario;
 }

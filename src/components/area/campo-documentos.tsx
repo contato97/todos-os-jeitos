@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { LIMITE_ENVIO, reduzirImagens, tamanhoLegivel } from "@/lib/reduzir-imagem";
 
 const ACEITOS = "application/pdf,.pdf,image/jpeg,image/png,image/webp,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-function tamanho(bytes: number) {
-  return bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
-}
+const tamanho = tamanhoLegivel;
 
 // Campo para anexar laudos e relatorios (PDF, foto ou Word), com a lista do que foi escolhido.
 // "limpar" muda quando o formulario e enviado com sucesso, para esvaziar a lista.
@@ -38,7 +37,7 @@ export function CampoDocumentos({ limpar }: { limpar?: unknown }) {
     <div className="flex min-w-0 flex-col gap-2">
       <span className="font-medium">Documentos de profissionais de saúde (opcional)</span>
       <p className="text-base">
-        Laudos e relatórios em PDF, foto ou Word. Até 5 arquivos, 10 MB no total. Só você acessa, e eles nunca vão para a IA.
+        Laudos e relatórios em PDF, foto ou Word. Até 5 arquivos, 4 MB no total (as fotos são reduzidas automaticamente). Só você acessa, e eles nunca vão para a IA.
       </p>
       <label className="w-fit cursor-pointer rounded-full px-5 py-2.5 font-medium ring-2 ring-marca hover:bg-marca/5">
         Anexar documentos
@@ -49,13 +48,19 @@ export function CampoDocumentos({ limpar }: { limpar?: unknown }) {
           multiple
           accept={ACEITOS}
           className="sr-only"
-          onChange={(e) => {
-            const novos = Array.from(e.target.files ?? []);
+          onChange={async (e) => {
+            // Fotos reduzidas no navegador (cabem no limite de envio e continuam legiveis)
+            const novos = await reduzirImagens(Array.from(e.target.files ?? []));
             const juntos = [...arquivos, ...novos].filter((a, i, l) => l.findIndex((b) => b.name === a.name && b.size === a.size) === i);
             atualizar(juntos);
           }}
         />
       </label>
+      {arquivos.reduce((t, a) => t + a.size, 0) > LIMITE_ENVIO && (
+        <p role="alert" className="rounded-xl border-l-4 border-coral bg-coral/10 p-3">
+          Os documentos passam de 4 MB no total. Anexe em partes (salve e depois anexe o restante).
+        </p>
+      )}
       {arquivos.length > 0 && (
         <ul className="flex flex-col gap-2" aria-label="Documentos escolhidos">
           {arquivos.map((a, i) => (

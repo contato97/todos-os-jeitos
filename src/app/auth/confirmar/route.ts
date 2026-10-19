@@ -1,8 +1,7 @@
-import type { EmailOtpType, SupabaseClient } from "@supabase/supabase-js";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { AREA_DO_PERFIL, type TipoPerfil } from "@/lib/auth";
-import { enviarEmail } from "@/lib/email/enviar";
-import { boasVindasEscola, boasVindasProfessor } from "@/lib/email/modelos";
+import { enviarBoasVindas } from "@/lib/email/boas-vindas";
 import { destinoSeguro } from "@/lib/formulario";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
@@ -40,20 +39,4 @@ export async function GET(request: NextRequest) {
 
   destino.pathname = proximo ?? (perfil ? AREA_DO_PERFIL[perfil.tipo as TipoPerfil] : "/");
   return NextResponse.redirect(destino);
-}
-
-// Professor e escola recebem as boas-vindas ao confirmar o e-mail.
-// A familia recebe depois do consentimento (ver familia/acoes.ts).
-async function enviarBoasVindas(supabase: SupabaseClient, tipo: TipoPerfil, nome: string, email: string, site: string) {
-  if (tipo === "familia") return;
-  // Devolve true so na primeira vez: ninguem recebe o e-mail duas vezes
-  const { data: enviar } = await supabase.rpc("marcar_boas_vindas");
-  if (!enviar) return;
-
-  if (tipo === "professor") {
-    await enviarEmail(email, boasVindasProfessor({ nome, site }));
-  } else {
-    const { data: escola } = await supabase.from("escolas").select("nome").maybeSingle();
-    await enviarEmail(email, boasVindasEscola({ nome, escola: escola?.nome ?? "sua escola", site }));
-  }
 }

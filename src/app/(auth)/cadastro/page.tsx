@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { JaConectado } from "../ja-conectado";
 import { FormularioCadastro } from "./formulario-cadastro";
 
 export const metadata: Metadata = { title: "Criar conta | Todos os Jeitos" };
@@ -11,6 +12,9 @@ export default function CadastroPage() {
       <h1 className="text-3xl font-semibold">Criar conta</h1>
       <p className="mt-2">Comece a acompanhar cada aluno do jeito dele.</p>
 
+      <Suspense>
+        <JaConectado />
+      </Suspense>
       <div className="mt-8">
         {/* Le o endereco (?proximo=...), por isso fica dentro do Suspense */}
         <Suspense>

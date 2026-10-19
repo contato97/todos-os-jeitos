@@ -159,7 +159,7 @@ export async function adaptarAtividade(
   }
   if (arquivos.length > LIMITE_ARQUIVOS) return { erro: `Envie no máximo ${LIMITE_ARQUIVOS} arquivos.`, valores };
   if (arquivos.reduce((t, a) => t + a.size, 0) > LIMITE_TOTAL) {
-    return { erro: "Os arquivos passam de 10 MB no total. Envie menos páginas ou fotos menores.", valores };
+    return { erro: "Os arquivos passam de 4 MB no total. Envie menos páginas ou divida em duas adaptações.", valores };
   }
 
   const supabase = await criarClienteServidor();

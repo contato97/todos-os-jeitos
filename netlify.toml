@@ -1,0 +1,13 @@
+# Configuracao do deploy no Netlify.
+# O Netlify reconhece o Next.js sozinho (adaptador oficial); aqui so fixamos
+# o comando de build e a versao do Node.
+#
+# As chaves (Supabase, Anthropic, Resend) NAO ficam aqui: sao cadastradas no
+# painel do Netlify em Site configuration > Environment variables, com os
+# mesmos nomes do .env.example.
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"

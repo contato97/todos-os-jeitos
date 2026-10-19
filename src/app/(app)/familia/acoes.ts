@@ -14,7 +14,8 @@ import { enderecoDoSite } from "@/lib/site";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
 const LIMITE_DIARIO = 10;
-const ARQUIVO_MAXIMO = 10 * 1024 * 1024;
+// Limite por envio no servidor publicado (Netlify aceita ~4,5 MB)
+const ARQUIVO_MAXIMO = 4 * 1024 * 1024;
 const TIPOS_IMAGEM = ["image/jpeg", "image/png", "image/webp"] as const;
 
 export async function darConsentimento(alunoId: string, _: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
@@ -90,7 +91,7 @@ export async function pedirApoio(alunoId: string, _: EstadoFormulario, formData:
   if (!tema && !pedido) return { erro: "Conte qual conteúdo vocês estão estudando.", valores };
   if (temArquivo) {
     const ok = arquivo.size <= ARQUIVO_MAXIMO && ([...TIPOS_IMAGEM, "application/pdf"] as string[]).includes(arquivo.type);
-    if (!ok) return { erro: "Envie uma foto (JPG, PNG) ou PDF de até 10 MB.", valores };
+    if (!ok) return { erro: "Envie uma foto (JPG, PNG) ou PDF de até 4 MB.", valores };
   }
 
   const supabase = await criarClienteServidor();

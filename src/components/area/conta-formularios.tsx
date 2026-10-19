@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Aviso, BotaoEnviar, Campo, CampoSenha } from "@/components/formulario";
 import { ATUACOES, CARGOS, ETAPAS, REDES } from "@/lib/opcoes-cadastro";
+import { reduzirNoCampo } from "@/lib/reduzir-imagem";
 import { alterarEmail, alterarSenha, enviarFoto, removerFoto, salvarDados } from "@/app/(app)/conta-acoes";
 
 const SENHA_MINIMA = 8;
@@ -36,8 +37,9 @@ export function FormularioFoto({ urlAtual, nome }: { urlAtual: string | null; no
             name="foto"
             type="file"
             accept="image/jpeg,image/png,image/webp"
-            onChange={(e) => {
-              const arquivo = e.target.files?.[0];
+            onChange={async (e) => {
+              // Reduz a foto no navegador antes de enviar (cabe no limite do servidor)
+              const arquivo = await reduzirNoCampo(e.currentTarget);
               setPrevia(arquivo ? URL.createObjectURL(arquivo) : null);
             }}
             className="w-full min-w-0 rounded-xl border-2 border-dashed border-marca/25 bg-white p-3 text-base file:mr-3 file:rounded-full file:border-0 file:bg-marca/10 file:px-4 file:py-2 file:font-medium"

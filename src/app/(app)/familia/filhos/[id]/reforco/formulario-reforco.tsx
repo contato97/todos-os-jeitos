@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { AreaTexto, Aviso, BotaoEnviar, Campo } from "@/components/formulario";
 import { MATERIAS, TEMPOS_REFORCO, TIPOS_REFORCO } from "@/lib/opcoes-cadastro";
+import { reduzirNoCampo } from "@/lib/reduzir-imagem";
 import { pedirApoio } from "../../../acoes";
 
 const CARTAO = "flex cursor-pointer gap-3 rounded-2xl border-2 border-marca/15 p-4 has-checked:border-petroleo has-checked:bg-petroleo/5";
@@ -106,6 +107,7 @@ export function FormularioReforco({ alunoId, nomeCrianca }: { alunoId: string; n
               type="file"
               accept="image/jpeg,image/png,image/webp,application/pdf"
               capture="environment"
+              onChange={(e) => reduzirNoCampo(e.currentTarget)}
               className="w-full min-w-0 rounded-xl border-2 border-dashed border-marca/25 bg-white p-3 text-base file:mr-3 file:rounded-full file:border-0 file:bg-marca/10 file:px-4 file:py-2 file:font-medium"
             />
           </div>

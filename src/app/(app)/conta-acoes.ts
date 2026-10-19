@@ -11,7 +11,8 @@ import { enderecoDoSite } from "@/lib/site";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { SENHA_MINIMA, mensagemDeErro } from "../(auth)/mensagens";
 
-const FOTO_MAXIMA = 8 * 1024 * 1024;
+// Limite por envio no servidor publicado (Netlify aceita ~4,5 MB)
+const FOTO_MAXIMA = 4 * 1024 * 1024;
 
 export async function salvarDados(_: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
   const usuario = await buscarUsuario();
@@ -61,7 +62,7 @@ export async function enviarFoto(_: EstadoFormulario, formData: FormData): Promi
   const arquivo = formData.get("foto");
   if (!(arquivo instanceof File) || arquivo.size === 0) return { erro: "Escolha uma foto." };
   if (!arquivo.type.startsWith("image/") || arquivo.size > FOTO_MAXIMA) {
-    return { erro: "Envie uma imagem (JPG, PNG ou WEBP) de até 8 MB." };
+    return { erro: "Envie uma imagem (JPG, PNG ou WEBP) de até 4 MB." };
   }
 
   // Padroniza a foto: gira conforme o celular tirou, recorta quadrada 400x400

@@ -3,15 +3,14 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { AreaTexto, Aviso, BotaoEnviar, Campo } from "@/components/formulario";
 import { PRIORIDADES_ADAPTACAO } from "@/lib/opcoes-cadastro";
+import { LIMITE_ENVIO, reduzirImagens, tamanhoLegivel } from "@/lib/reduzir-imagem";
 import { adaptarAtividade } from "../../../../acoes";
 
 const LIMITE_ARQUIVOS = 6;
-const LIMITE_TOTAL = 10 * 1024 * 1024;
+const LIMITE_TOTAL = LIMITE_ENVIO;
 const ACEITOS = "image/*,application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.txt,text/plain";
 
-function tamanho(bytes: number) {
-  return bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
-}
+const tamanho = tamanhoLegivel;
 
 function rotuloTipo(arquivo: File) {
   const n = arquivo.name.toLowerCase();
@@ -47,12 +46,21 @@ export function FormularioNovaAtividade({ alunoId, retorno }: { alunoId: string;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- so quando chega uma resposta nova
   }, [estado]);
 
+  // Fotos chegam reduzidas (no maximo 2000 px): o envio fica leve e cabe no limite do servidor
+  const [reduzindo, setReduzindo] = useState(false);
+  async function adicionar(novos: File[]) {
+    setReduzindo(true);
+    const prontos = await reduzirImagens(novos);
+    setReduzindo(false);
+    atualizar([...arquivos, ...prontos]);
+  }
+
   const total = arquivos.reduce((t, a) => t + a.size, 0);
   const problema =
     arquivos.length > LIMITE_ARQUIVOS
       ? `Envie no máximo ${LIMITE_ARQUIVOS} arquivos.`
       : total > LIMITE_TOTAL
-        ? "Os arquivos passam de 10 MB no total."
+        ? "Os arquivos passam de 4 MB no total. Envie menos páginas ou divida em duas adaptações."
         : null;
 
   return (
@@ -64,7 +72,7 @@ export function FormularioNovaAtividade({ alunoId, retorno }: { alunoId: string;
 
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 font-medium">A atividade original</legend>
-        <p className="text-base">Fotos da folha, PDF, Word (.docx) ou texto. Até {LIMITE_ARQUIVOS} arquivos, 10 MB no total.</p>
+        <p className="text-base">Fotos da folha, PDF, Word (.docx) ou texto. Até {LIMITE_ARQUIVOS} arquivos, 4 MB no total (as fotos são reduzidas automaticamente).</p>
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -74,7 +82,7 @@ export function FormularioNovaAtividade({ alunoId, retorno }: { alunoId: string;
           onDrop={(e) => {
             e.preventDefault();
             setArrastando(false);
-            atualizar([...arquivos, ...Array.from(e.dataTransfer.files)]);
+            adicionar(Array.from(e.dataTransfer.files));
           }}
           className={`flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed p-6 text-center ${
             arrastando ? "border-petroleo bg-petroleo/5" : "border-marca/25 bg-white"
@@ -92,7 +100,7 @@ export function FormularioNovaAtividade({ alunoId, retorno }: { alunoId: string;
                 multiple
                 accept={ACEITOS}
                 className="sr-only"
-                onChange={(e) => atualizar([...arquivos, ...Array.from(e.target.files ?? [])])}
+                onChange={(e) => adicionar(Array.from(e.target.files ?? []))}
               />
             </label>
             {/* No celular, abre direto a camera para fotografar a folha */}
@@ -103,7 +111,7 @@ export function FormularioNovaAtividade({ alunoId, retorno }: { alunoId: string;
                 accept="image/*"
                 capture="environment"
                 className="sr-only"
-                onChange={(e) => atualizar([...arquivos, ...Array.from(e.target.files ?? [])])}
+                onChange={(e) => adicionar(Array.from(e.target.files ?? []))}
               />
             </label>
           </div>
@@ -129,6 +137,7 @@ export function FormularioNovaAtividade({ alunoId, retorno }: { alunoId: string;
             ))}
           </ul>
         )}
+        {reduzindo && <p role="status" className="text-base">Preparando as fotos...</p>}
         {problema && <Aviso tipo="erro">{problema}</Aviso>}
 
         <details className="mt-2" open={Boolean(estado.valores?.texto)}>

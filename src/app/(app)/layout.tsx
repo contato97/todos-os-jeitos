@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { AvisoAreaErrada } from "@/components/area/aviso-area-errada";
 import { Avatar } from "@/components/avatar";
 import { BotaoTema } from "@/components/botao-tema";
 import { Logo } from "@/components/logo";
@@ -26,7 +27,13 @@ export default function LayoutLogado({ children }: LayoutProps<"/">) {
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+        {/* Le o endereco (?aviso=...), por isso fica dentro do Suspense */}
+        <Suspense>
+          <AvisoAreaErrada />
+        </Suspense>
+        {children}
+      </main>
     </>
   );
 }

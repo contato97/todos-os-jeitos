@@ -11,7 +11,9 @@ import sharp from "sharp";
 // - texto (.txt) -> vai como esta
 
 export const LIMITE_ARQUIVOS = 6;
-export const LIMITE_TOTAL = 10 * 1024 * 1024;
+// Todos os arquivos de um envio juntos. O servidor publicado (Netlify) aceita ~4,5 MB por envio;
+// as fotos sao reduzidas no navegador antes de enviar (src/lib/reduzir-imagem.ts).
+export const LIMITE_TOTAL = 4 * 1024 * 1024;
 
 const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 

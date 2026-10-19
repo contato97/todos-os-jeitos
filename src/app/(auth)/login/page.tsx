@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { JaConectado } from "../ja-conectado";
 import { FormularioLogin } from "./formulario-login";
 
 export const metadata: Metadata = { title: "Entrar | Todos os Jeitos" };
@@ -11,6 +12,9 @@ export default function LoginPage() {
       <h1 className="text-3xl font-semibold">Entrar</h1>
       <p className="mt-2">Professores, escolas e famílias entram por aqui.</p>
 
+      <Suspense>
+        <JaConectado />
+      </Suspense>
       <div className="mt-8">
         {/* O formulario le o endereco da pagina (?aviso=...), por isso fica dentro do Suspense */}
         <Suspense>

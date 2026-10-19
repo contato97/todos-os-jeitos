@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { AREA_DO_PERFIL } from "@/lib/auth";
 import { destinoSeguro } from "@/lib/formulario";
 import { ATUACOES, CARGOS, ETAPAS, REDES, valorValido } from "@/lib/opcoes-cadastro";
+import { enviarBoasVindas } from "@/lib/email/boas-vindas";
 import { enderecoDoSite } from "@/lib/site";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import {
@@ -104,7 +105,11 @@ export async function cadastrar(
 
   // Se a confirmacao por e-mail estiver desligada no Supabase (fase de testes),
   // a conta ja vem com sessao: entra direto
-  if (cadastro.session) redirect(proximo ?? AREA_DO_PERFIL[tipo]);
+  if (cadastro.session) {
+    // Sem link de confirmacao, as boas-vindas saem agora
+    await enviarBoasVindas(supabase, tipo, nome, email, await enderecoDoSite());
+    redirect(proximo ?? AREA_DO_PERFIL[tipo]);
+  }
 
   // Por seguranca, o Supabase responde igual se o e-mail ja existir,
   // assim ninguem descobre quais e-mails tem conta. A mensagem tambem e a mesma.
@@ -159,4 +164,11 @@ export async function sair() {
   const supabase = await criarClienteServidor();
   await supabase.auth.signOut();
   redirect("/");
+}
+
+// Sai e volta para o login, para entrar com outra conta (ex.: testar a escola)
+export async function sairETrocarConta() {
+  const supabase = await criarClienteServidor();
+  await supabase.auth.signOut();
+  redirect("/login");
 }

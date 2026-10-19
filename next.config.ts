@@ -5,8 +5,8 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   experimental: {
     serverActions: {
-      // PDFs de atividade e fotos de licao chegam a 10 MB (+ folga do envio)
-      bodySizeLimit: "11mb",
+      // Ate 4 MB de arquivos por envio (+ folga): o Netlify aceita ~4,5 MB por requisicao
+      bodySizeLimit: "5mb",
     },
   },
   partialPrefetching: true,
