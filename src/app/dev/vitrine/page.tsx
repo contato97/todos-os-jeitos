@@ -274,54 +274,32 @@ export default async function Vitrine() {
           >
             <div>
               <PainelEscolaView
-                escola={{ nome: "Escola Raio de Sol" }}
-                professores={[
-                  { id: "p1", nome: "Ana Paula Ribeiro" },
-                  { id: "p2", nome: "Bruno Lima" },
-                  { id: "p3", nome: "Juliana Costa" },
-                ]}
-                alunos={[
-                  { id: "al1", nome: "Lia Souza", professor_id: "p1" },
-                  { id: "al2", nome: "Pedro Alves", professor_id: "p1" },
-                  { id: "al3", nome: "Theo Martins", professor_id: "p2" },
-                  { id: "al4", nome: "Maria Clara", professor_id: "p3" },
-                  { id: "al5", nome: "Davi Rocha", professor_id: "p3" },
-                ]}
-                atividades={[
-                  {
-                    id: "t1",
-                    titulo: "Somando com dinossauros",
-                    aluno_id: "al1",
-                    professor_id: "p1",
-                    atualizado_em: new Date().toISOString(),
-                  },
-                  {
-                    id: "t2",
-                    titulo: "Leitura: o ciclo da água",
-                    aluno_id: "al3",
-                    professor_id: "p2",
-                    atualizado_em: new Date().toISOString(),
-                  },
-                  {
-                    id: "t3",
-                    titulo: "Frações com pizza",
-                    aluno_id: "al4",
-                    professor_id: "p3",
-                    atualizado_em: new Date().toISOString(),
-                  },
-                  {
-                    id: "t4",
-                    titulo: "Interpretação de texto",
-                    aluno_id: "al2",
-                    professor_id: "p1",
-                    atualizado_em: new Date().toISOString(),
-                  },
-                ]}
-                relatorios={[
-                  { id: "rr1", professor_id: "p1" },
-                  { id: "rr2", professor_id: "p3" },
-                ]}
-              />
+              escola={{ nome: "Escola Raio de Sol" }}
+              professores={[
+                { id: "p1", nome: "Ana Paula Ribeiro" },
+                { id: "p2", nome: "Bruno Lima" },
+                { id: "p3", nome: "Juliana Costa" },
+              ]}
+              resumo={[
+                { professor_id: "p1", alunos: 2, atividades_revisadas: 6, atividades_30d: 3, relatorios_revisados: 2, observacoes_30d: 14, familias_conectadas: 2, ultima_atividade: new Date().toISOString() },
+                { professor_id: "p2", alunos: 1, atividades_revisadas: 2, atividades_30d: 0, relatorios_revisados: 0, observacoes_30d: 3, familias_conectadas: 0, ultima_atividade: "2026-08-20T12:00:00Z" },
+                { professor_id: "p3", alunos: 2, atividades_revisadas: 0, atividades_30d: 0, relatorios_revisados: 0, observacoes_30d: 5, familias_conectadas: 1, ultima_atividade: null },
+              ]}
+              resumoAlunos={[
+                { aluno_id: "al1", familia_conectada: true, atividades_revisadas: 4 },
+                { aluno_id: "al2", familia_conectada: true, atividades_revisadas: 2 },
+                { aluno_id: "al3", familia_conectada: false, atividades_revisadas: 2 },
+                { aluno_id: "al4", familia_conectada: true, atividades_revisadas: 0 },
+                { aluno_id: "al5", familia_conectada: false, atividades_revisadas: 0 },
+              ]}
+              recentes={[
+                { id: "t1", titulo: "Somando com dinossauros", aluno_id: "al1", professor_id: "p1", atualizado_em: new Date().toISOString() },
+                { id: "t2", titulo: "Interpretação de texto", aluno_id: "al2", professor_id: "p1", atualizado_em: new Date().toISOString() },
+                { id: "t3", titulo: "Leitura: o ciclo da água", aluno_id: "al3", professor_id: "p2", atualizado_em: "2026-08-20T12:00:00Z" },
+              ]}
+              nomesAlunos={{ al1: "Lia Souza", al2: "Pedro Alves", al3: "Theo Martins", al4: "Maria Clara", al5: "Davi Rocha" }}
+              convitesPendentes={1}
+            />
             </div>
           </AreaComMenu>
         </main>

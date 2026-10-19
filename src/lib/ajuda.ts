@@ -161,7 +161,17 @@ export const AJUDA_ESCOLA = {
       {
         pergunta: "De onde vêm esses números?",
         resposta:
-          "Dos professores vinculados à escola: quantos alunos eles acompanham e quantas atividades e relatórios já foram revisados.",
+          "Dos professores vinculados à escola: quantos alunos eles acompanham, quantas observações registraram no mês, quantas atividades e relatórios já foram revisados e quantas famílias estão conectadas.",
+      },
+      {
+        pergunta: "O que é o bloco “Pede atenção”?",
+        resposta:
+          "Um lembrete do que pode precisar de apoio da coordenação: professores sem adaptações no último mês, alunos sem nenhuma atividade adaptada, alunos sem família conectada e convites ainda sem resposta. Clique em cada item para ver os detalhes.",
+      },
+      {
+        pergunta: "Por que a escola vê números e não as observações?",
+        resposta:
+          "As observações do dia a dia, os dados de saúde e os contatos das famílias são do professor e da família (LGPD). A escola acompanha o panorama e o que já foi revisado, sem acessar esses conteúdos.",
       },
     ],
   },

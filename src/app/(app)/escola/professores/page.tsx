@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ComoUsar } from "@/components/area/como-usar";
 import { FormularioConvite } from "@/components/area/formulario-convite";
 import { BOTAO_DISCRETO, Cartao, Etiqueta, Vazio, formatarData } from "@/components/ui";
@@ -76,7 +77,9 @@ export default async function ProfessoresEscola() {
                 <li key={p.id}>
                   <Cartao className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-semibold">{p.nome}</p>
+                      <Link href={`/escola/professores/${p.id}`} className="font-semibold underline-offset-4 hover:underline">
+                        {p.nome}
+                      </Link>
                       <p className="text-base">
                         {p.etapas.map((e) => ETAPAS[e] ?? e).join(", ")}
                         {p.atuacao && ` · ${p.atuacao === "polivalente" ? "Base comum" : "Uma matéria"}`} · desde {formatarData(p.desde)}

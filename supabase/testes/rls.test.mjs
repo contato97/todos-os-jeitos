@@ -273,5 +273,18 @@ await deveFalhar("tempo fora do limite e recusado", mae,
   `insert into reforcos (aluno_id, tipo, tempo_minutos, pedido) values ($1, 'reforco', 300, 'x')`, [aluno.id]);
 confere("professor ve o pedido especializado", (await comoUsuario(profA, `select * from reforcos where tipo = 'material'`)).length === 1);
 
+// ---------- Resumo da escola (so contagens) ----------
+console.log("\nResumo da escola");
+const resumoProf = await comoUsuario(escola, `select * from resumo_escola_professores()`);
+confere("escola ve o resumo do professor vinculado", resumoProf.length === 1 && resumoProf[0].professor_id === profA.id);
+confere("resumo conta alunos e observacoes", resumoProf[0]?.alunos === 1 && resumoProf[0]?.observacoes_30d >= 3, JSON.stringify(resumoProf[0]));
+confere("resumo conta familia conectada", resumoProf[0]?.familias_conectadas === 1);
+const resumoAlunos = await comoUsuario(escola, `select * from resumo_escola_alunos()`);
+confere("escola ve o resumo por aluno", resumoAlunos.length === 1 && resumoAlunos[0].familia_conectada === true);
+confere("resumo por aluno nao traz texto nenhum", !Object.values(resumoAlunos[0]).some((v) => typeof v === "string" && v.length > 40));
+confere("professor B (nao e escola) recebe resumo vazio", (await comoUsuario(profB, `select * from resumo_escola_professores()`)).length === 0);
+confere("familia recebe resumo vazio", (await comoUsuario(mae, `select * from resumo_escola_alunos()`)).length === 0);
+await deveFalhar("visitante nao chama o resumo", null, `select * from resumo_escola_alunos()`);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);
