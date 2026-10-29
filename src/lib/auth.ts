@@ -2,7 +2,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
-export type TipoPerfil = "professor" | "familia" | "escola";
+export type TipoPerfil = "professor" | "familia" | "escola" | "especialista";
 
 export type Usuario = {
   id: string;
@@ -16,6 +16,7 @@ export const AREA_DO_PERFIL: Record<TipoPerfil, string> = {
   professor: "/professor",
   escola: "/escola",
   familia: "/familia",
+  especialista: "/especialista",
 };
 
 // Camada unica de acesso ao usuario logado: toda pagina protegida passa por aqui.

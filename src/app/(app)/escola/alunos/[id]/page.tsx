@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Carregando } from "@/components/area/em-breve";
+import { RegistrosEspecialistas, buscarRegistrosEspecialistas } from "@/components/area/registros-especialistas";
 import { FormularioConvite } from "@/components/area/formulario-convite";
 import { Cartao, Vazio, formatarData } from "@/components/ui";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -28,10 +29,12 @@ export default function AlunoEscola({ params }: PageProps<"/escola/alunos/[id]">
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await criarClienteServidor();
-  const [{ data: aluno }, { data: atividades }, { data: relatorios }] = await Promise.all([
+  const [{ data: aluno }, { data: atividades }, { data: relatorios }, orientacoes] = await Promise.all([
     supabase.from("alunos").select("*").eq("id", id).maybeSingle(),
     supabase.from("atividades").select("id, titulo, atualizado_em").eq("aluno_id", id).order("atualizado_em", { ascending: false }),
     supabase.from("relatorios").select("id, periodo_inicio, periodo_fim").eq("aluno_id", id).order("periodo_fim", { ascending: false }),
+    // A escola recebe so as orientacoes; informacoes clinicas o RLS nao entrega
+    buscarRegistrosEspecialistas(supabase, id),
   ]);
   if (!aluno) notFound();
 
@@ -105,6 +108,15 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
               </ul>
             )}
           </Cartao>
+
+          {orientacoes.length > 0 && (
+            <section aria-labelledby="titulo-esp" className="space-y-3">
+              <h2 id="titulo-esp" className="text-xl font-semibold">
+                Orientações dos especialistas
+              </h2>
+              <RegistrosEspecialistas registros={orientacoes} />
+            </section>
+          )}
         </div>
 
         <Cartao className="h-fit">

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Avatar } from "@/components/avatar";
 import { Carregando } from "@/components/area/em-breve";
 import { Cartao, Etiqueta, Vazio, formatarData } from "@/components/ui";
-import { ETAPAS } from "@/lib/opcoes-cadastro";
+import { ETAPAS, ROTULO_ATUACAO } from "@/lib/opcoes-cadastro";
 import type { ResumoAluno, ResumoProfessor } from "../../painel-escola";
 import { dadosDaEscola } from "../../dados";
 
@@ -64,7 +64,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
           <h1 className="text-3xl font-semibold">{professor.nome}</h1>
           <p className="mt-1">
             {etapas}
-            {professor.atuacao && ` · ${professor.atuacao === "polivalente" ? "Base comum" : "Uma matéria"}`} · na escola desde{" "}
+            {professor.atuacao && ` · ${ROTULO_ATUACAO[professor.atuacao] ?? ""}`} · na escola desde{" "}
             {formatarData(professor.desde)}
           </p>
         </div>

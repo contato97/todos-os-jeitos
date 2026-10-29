@@ -3,6 +3,7 @@ import { ComoUsar } from "@/components/area/como-usar";
 import { FormularioConvite } from "@/components/area/formulario-convite";
 import { BOTAO_DISCRETO, Cartao, Etiqueta, Vazio, formatarData } from "@/components/ui";
 import { AJUDA_ESCOLA } from "@/lib/ajuda";
+import { ROTULO_ATUACAO } from "@/lib/opcoes-cadastro";
 import { agoraIso } from "@/lib/datas";
 import { cancelarConvite, convidarProfessor } from "../../acoes-convite";
 import { removerProfessor } from "../acoes";
@@ -82,7 +83,7 @@ export default async function ProfessoresEscola() {
                       </Link>
                       <p className="text-base">
                         {p.etapas.map((e) => ETAPAS[e] ?? e).join(", ")}
-                        {p.atuacao && ` · ${p.atuacao === "polivalente" ? "Base comum" : "Uma matéria"}`} · desde {formatarData(p.desde)}
+                        {p.atuacao && ` · ${ROTULO_ATUACAO[p.atuacao] ?? ""}`} · desde {formatarData(p.desde)}
                       </p>
                     </div>
                     {escola && (

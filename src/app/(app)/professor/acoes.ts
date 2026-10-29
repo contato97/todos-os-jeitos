@@ -8,6 +8,7 @@ import { apagarArquivosDoAluno, guardarDocumentos } from "@/lib/documentos";
 import { ErroArquivo, LIMITE_ARQUIVOS, LIMITE_TOTAL, prepararArquivo, type ArquivoPreparado } from "@/lib/arquivos";
 import { ErroIA, perguntarIA } from "@/lib/ia/cliente";
 import { mencionaDiagnostico, AVISO_DIAGNOSTICO } from "@/lib/ia/diagnostico";
+import { casaParaIA } from "@/lib/ia/casa";
 import { SCHEMA_RELATORIO, SISTEMA_ADAPTAR, SISTEMA_RELATORIO, descreverPerfil } from "@/lib/ia/prompts";
 import { lerCampo, type EstadoFormulario } from "@/lib/formulario";
 import { PRIORIDADES_ADAPTACAO } from "@/lib/opcoes-cadastro";
@@ -165,6 +166,7 @@ export async function adaptarAtividade(
   const supabase = await criarClienteServidor();
   const { data: aluno } = await supabase.from("alunos").select("*").eq("id", alunoId).maybeSingle();
   if (!aluno) return { erro: "Aluno não encontrado.", valores };
+  const casa = await casaParaIA(supabase, alunoId);
 
   // Le cada arquivo no formato que a IA entende
   let preparados: ArquivoPreparado[];
@@ -191,7 +193,7 @@ export async function adaptarAtividade(
         {
           type: "text",
           text: [
-            `Perfil do aluno:\n${descreverPerfil(aluno)}`,
+            `Perfil do aluno:\n${descreverPerfil(aluno, casa)}`,
             `Título da atividade: ${titulo}`,
             texto ? `Atividade original (texto):\n${texto}` : "",
             preparados.length ? `A atividade original também está nos ${preparados.length} arquivo(s) anexado(s), na ordem enviada.` : "",
@@ -265,6 +267,7 @@ export async function salvarAtividade(
   const acao = lerCampo(formData, "acao"); // salvar | revisar | reabrir
   const compartilhar = formData.get("compartilhar") === "on";
   if (!titulo || !conteudo) return { erro: "Título e conteúdo não podem ficar vazios." };
+  const dicasFamilia = lerCampo(formData, "dicas_familia").slice(0, 3000) || null;
 
   const status = acao === "revisar" ? "revisado" : acao === "reabrir" ? "rascunho" : lerCampo(formData, "status");
   const supabase = await criarClienteServidor();
@@ -273,6 +276,7 @@ export async function salvarAtividade(
     .update({
       titulo,
       conteudo_adaptado: conteudo,
+      dicas_familia: dicasFamilia,
       status,
       compartilhado_com_familia: status === "revisado" && compartilhar,
     })
@@ -315,6 +319,7 @@ export async function gerarRelatorio(
       .order("data_observacao"),
   ]);
   if (!aluno) return { erro: "Aluno não encontrado.", valores };
+  const casa = await casaParaIA(supabase, alunoId);
 
   const listaObs = observacoes?.length
     ? observacoes.map((o) => `- ${o.data_observacao} (${o.origem === "casa" ? "relato da família" : "escola"}): ${o.texto}`).join("\n")
@@ -328,7 +333,7 @@ export async function gerarRelatorio(
       conteudo: [
         {
           type: "text",
-          text: `Período: ${inicio} a ${fim}\n\nPerfil do aluno:\n${descreverPerfil(aluno)}\n\nObservações do período:\n${listaObs}`,
+          text: `Período: ${inicio} a ${fim}\n\nPerfil do aluno:\n${descreverPerfil(aluno, casa)}\n\nObservações do período:\n${listaObs}`,
         },
       ],
     });

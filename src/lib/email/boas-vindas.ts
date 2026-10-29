@@ -8,9 +8,10 @@ import { boasVindasEscola, boasVindasProfessor } from "./modelos";
 // - ao confirmar o e-mail (link do Supabase -> /auth/confirmar)
 // - logo apos o cadastro, quando a confirmacao por e-mail esta desligada
 // A familia recebe depois do consentimento (familia/acoes.ts).
+// O especialista ja recebe a apresentacao completa no e-mail de convite.
 // O banco garante que sai uma unica vez por pessoa (marcar_boas_vindas).
 export async function enviarBoasVindas(supabase: SupabaseClient, tipo: TipoPerfil, nome: string, email: string, site: string) {
-  if (tipo === "familia") return;
+  if (tipo === "familia" || tipo === "especialista") return;
   const { data: enviar } = await supabase.rpc("marcar_boas_vindas");
   if (!enviar) return;
 

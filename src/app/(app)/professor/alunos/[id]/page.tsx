@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ComoUsar } from "@/components/area/como-usar";
 import { Carregando } from "@/components/area/em-breve";
+import { RegistrosEspecialistas, buscarRegistrosEspecialistas } from "@/components/area/registros-especialistas";
 import { Aviso } from "@/components/formulario";
 import { BOTAO_SECUNDARIO, Cartao, formatarData } from "@/components/ui";
 import { AJUDA_PROFESSOR } from "@/lib/ajuda";
+import { CAMPOS_CASA } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { apagarAluno, apagarDocumento } from "../../acoes";
 import { FormularioDocumentos } from "./formulario-documentos";
@@ -37,7 +39,7 @@ async function Conteudo({
   const { id } = await params;
   const { novo, editar, aviso } = await searchParams;
   const supabase = await criarClienteServidor();
-  const [{ data: aluno }, { data: saude }, { count: obsCount }, { count: ativCount }, { data: documentos }] = await Promise.all([
+  const [{ data: aluno }, { data: saude }, { count: obsCount }, { count: ativCount }, { data: documentos }, { data: fichasCasa }, registrosEsp] = await Promise.all([
     supabase.from("alunos").select("*").eq("id", id).maybeSingle(),
     supabase.from("alunos_saude").select("informacoes").eq("aluno_id", id).maybeSingle(),
     supabase.from("observacoes").select("*", { count: "exact", head: true }).eq("aluno_id", id),
@@ -47,6 +49,11 @@ async function Conteudo({
       .select("id, nome_original, descricao, caminho, tipo, tamanho, created_at")
       .eq("aluno_id", id)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("aluno_casa")
+      .select("familia_id, como_em_casa, rotina_estudo, medicacoes, acompanhamentos, outras, atualizado_em, perfis(nome)")
+      .eq("aluno_id", id),
+    buscarRegistrosEspecialistas(supabase, id),
   ]);
   if (!aluno) return null;
 
@@ -101,6 +108,41 @@ async function Conteudo({
               <p className="mt-1 whitespace-pre-line">{aluno[s.campo] || <em>Ainda não preenchido.</em>}</p>
             </Cartao>
           ))}
+
+          {/* Ficha que a familia preenche. Medicacoes e acompanhamentos sao saude: so o professor ve */}
+          {fichasCasa?.map((f) => {
+            const autor = Array.isArray(f.perfis) ? f.perfis[0] : f.perfis;
+            const preenchidos = CAMPOS_CASA.filter((c) => f[c.nome]);
+            if (!preenchidos.length) return null;
+            return (
+              <Cartao key={f.familia_id} className="border-2 border-salvia/40">
+                <h2 className="text-lg font-semibold">Como é em casa</h2>
+                <p className="text-base">
+                  Contado por {autor?.nome ?? "a família"} · atualizado em {formatarData(f.atualizado_em)}
+                </p>
+                <dl className="mt-3 space-y-3">
+                  {preenchidos.map((c) => (
+                    <div key={c.nome}>
+                      <dt className="font-medium">
+                        {c.rotulo}
+                        {!c.ia && " 🔒"}
+                      </dt>
+                      <dd className="whitespace-pre-line">{f[c.nome]}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Cartao>
+            );
+          })}
+
+          {registrosEsp.length > 0 && (
+            <section aria-labelledby="titulo-esp" className="space-y-3">
+              <h2 id="titulo-esp" className="text-lg font-semibold">
+                Registros dos especialistas
+              </h2>
+              <RegistrosEspecialistas registros={registrosEsp} />
+            </section>
+          )}
         </div>
 
         <div className="space-y-4">

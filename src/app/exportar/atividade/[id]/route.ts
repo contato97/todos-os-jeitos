@@ -2,16 +2,20 @@ import type { NextRequest } from "next/server";
 import { nomeDeArquivo, versaoDoAluno } from "@/lib/atividade-texto";
 import { gerarPdf } from "@/lib/exportar/pdf";
 import { gerarWord } from "@/lib/exportar/word";
+import { buscarUsuario } from "@/lib/auth";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
 // Download da atividade em Word ou PDF:
 //   /exportar/atividade/{id}?formato=word|pdf&versao=aluno|completa
-// Quem pode baixar e decidido pelo RLS: o professor dono, a familia (se
-// compartilhada) e a escola vinculada. So atividades REVISADAS saem.
+// Quem pode baixar: o professor dono e a escola vinculada (RLS). A familia so
+// visualiza na plataforma, sem baixar. So atividades REVISADAS saem.
 export async function GET(request: NextRequest, { params }: RouteContext<"/exportar/atividade/[id]">) {
   const { id } = await params;
   const formato = request.nextUrl.searchParams.get("formato") === "word" ? "word" : "pdf";
   const somenteAluno = request.nextUrl.searchParams.get("versao") !== "completa";
+
+  const usuario = await buscarUsuario();
+  if (!usuario || usuario.tipo === "familia") return new Response("Sem permissão para baixar.", { status: 403 });
 
   const supabase = await criarClienteServidor();
   const { data: atividade } = await supabase

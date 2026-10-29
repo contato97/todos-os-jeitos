@@ -191,6 +191,7 @@ export default async function Vitrine() {
                       id: "a1",
                       titulo: "Somando com dinossauros",
                       conteudo_adaptado: ATIVIDADE,
+                      dicas_familia: "Em casa, deixe ele contar com feijões e leia o enunciado em voz alta.",
                     },
                   ]}
                   observacoes={[

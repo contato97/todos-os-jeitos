@@ -203,6 +203,26 @@ export const AJUDA_ESCOLA = {
       },
     ],
   },
+  especialistas: {
+    titulo: "Especialistas",
+    perguntas: [
+      {
+        pergunta: "Quem pode entrar como especialista?",
+        resposta:
+          "Profissionais que acompanham os alunos fora da escola: psicólogos, terapeutas ocupacionais, fonoaudiólogos, neuropediatras, psicopedagogos e outros. Eles só entram pelo convite que a coordenação ou direção envia.",
+      },
+      {
+        pergunta: "O especialista vê todos os alunos?",
+        resposta:
+          "Não. Ele só vê os alunos que você escolher. Para cada aluno, você decide se ele pode ver os relatórios revisados e se pode registrar orientações. Dá para mudar ou tirar o acesso a qualquer momento.",
+      },
+      {
+        pergunta: "Por que a escola não vê as informações clínicas do especialista?",
+        resposta:
+          "Medicações, receitas e outras informações de saúde são dados sensíveis (LGPD). Elas ficam só com o professor do aluno e a família. A escola vê as orientações pedagógicas.",
+      },
+    ],
+  },
 } satisfies Record<string, SecaoAjuda>;
 
 export const AJUDA_FAMILIA = {
@@ -249,6 +269,26 @@ export const AJUDA_FAMILIA = {
       },
     ],
   },
+  casa: {
+    titulo: "Como é em casa",
+    perguntas: [
+      {
+        pergunta: "Para que serve esta ficha?",
+        resposta:
+          "Para você contar como seu filho é em casa: o jeito dele, como faz as tarefas, medicações e acompanhamentos. Com isso, o professor conhece a criança por inteiro e o acompanhamento fica mais individualizado.",
+      },
+      {
+        pergunta: "Quem vê o que eu escrevo aqui?",
+        resposta:
+          "Só você e o professor do seu filho. A escola (coordenação) não vê esta ficha, porque ela pode ter informações de saúde.",
+      },
+      {
+        pergunta: "A inteligência artificial lê as medicações?",
+        resposta:
+          "Não. Medicações e acompanhamentos nunca vão para a IA. Só o jeito em casa e a rotina de estudo ajudam a IA a sugerir atividades mais parecidas com seu filho, sempre sem o nome dele.",
+      },
+    ],
+  },
   reforco: {
     titulo: "Reforço e lição de casa",
     perguntas: [
@@ -271,6 +311,42 @@ export const AJUDA_FAMILIA = {
         pergunta: "Meu filho pode usar sozinho?",
         resposta:
           "O reforço é pensado para ser conduzido por um adulto. Esse cuidado faz parte do nosso compromisso de ter sempre uma pessoa por perto.",
+      },
+    ],
+  },
+} satisfies Record<string, SecaoAjuda>;
+
+export const AJUDA_ESPECIALISTA = {
+  alunos: {
+    titulo: "Meus alunos",
+    perguntas: [
+      {
+        pergunta: "Por que vejo só alguns alunos?",
+        resposta:
+          "A escola escolhe quais alunos você acompanha. Se faltar alguém, fale com a coordenação ou direção que convidou você.",
+      },
+      {
+        pergunta: "O que consigo ver de cada aluno?",
+        resposta:
+          "O perfil de aprendizagem (o que funciona, o que trava, interesses e pontos fortes) e, se a escola liberar, os relatórios já revisados pelo professor.",
+      },
+    ],
+  },
+  registros: {
+    titulo: "Registrar informações",
+    perguntas: [
+      {
+        pergunta: "Qual a diferença entre orientação e informação clínica?",
+        resposta:
+          "Orientação é para o dia a dia da escola e de casa (estratégias, adaptações, o que observar): professor, família e coordenação veem. Informação clínica (medicação, receitas, dados de saúde) só o professor do aluno e a família veem.",
+      },
+      {
+        pergunta: "A inteligência artificial lê o que eu registro?",
+        resposta: "Não. Nada do que você registra vai para a IA.",
+      },
+      {
+        pergunta: "Posso apagar um registro?",
+        resposta: "Sim, os seus. Registros não são editados depois de enviados, para manter o histórico fiel.",
       },
     ],
   },

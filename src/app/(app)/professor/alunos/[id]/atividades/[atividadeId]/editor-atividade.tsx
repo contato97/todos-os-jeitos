@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { EditorTexto } from "@/components/editor-texto";
-import { Aviso, BotaoEnviar, CaixaMarcar, Campo } from "@/components/formulario";
+import { AreaTexto, Aviso, BotaoEnviar, CaixaMarcar, Campo } from "@/components/formulario";
 import { salvarAtividade } from "../../../../acoes";
 
 type Atividade = {
@@ -11,6 +11,7 @@ type Atividade = {
   conteudo_adaptado: string | null;
   status: string;
   compartilhado_com_familia: boolean;
+  dicas_familia?: string | null;
 };
 
 export function EditorAtividade({ atividade, avisoInicial }: { atividade: Atividade; avisoInicial?: string }) {
@@ -27,6 +28,15 @@ export function EditorAtividade({ atividade, avisoInicial }: { atividade: Ativid
 
       <Campo rotulo="Título" name="titulo" required defaultValue={atividade.titulo} />
       <EditorTexto rotulo="Atividade adaptada" name="conteudo" valorInicial={atividade.conteudo_adaptado ?? ""} />
+
+      <AreaTexto
+        rotulo="Dicas do professor para a família (opcional)"
+        name="dicas_familia"
+        rows={3}
+        maxLength={3000}
+        defaultValue={atividade.dicas_familia ?? ""}
+        dica="Aparece para a família junto com a atividade. Ex.: “Em casa, deixe ele contar com feijões e leia o enunciado em voz alta.” As dicas para o professor, geradas pela IA, a família não vê."
+      />
 
       {revisada && (
         <CaixaMarcar

@@ -286,5 +286,134 @@ confere("professor B (nao e escola) recebe resumo vazio", (await comoUsuario(pro
 confere("familia recebe resumo vazio", (await comoUsuario(mae, `select * from resumo_escola_alunos()`)).length === 0);
 await deveFalhar("visitante nao chama o resumo", null, `select * from resumo_escola_alunos()`);
 
+
+// ---------- WhatsApp e atuacao mista ----------
+console.log("\nWhatsApp e atuacao mista");
+const profC = await criarConta("c@teste.com", { tipo: "professor", nome: "Prof C", escola: "Escola Z",
+  whatsapp: "(11) 91234-5678", rede: "ambas", etapas: ["infantil"], atuacao: "ambos" });
+confere("professor nas duas redes e nas duas atuacoes",
+  (await db.query(`select rede, atuacao from professores where id = $1`, [profC.id])).rows[0]?.rede === "ambas");
+confere("whatsapp guardado so com digitos",
+  (await db.query(`select whatsapp from perfis where id = $1`, [profC.id])).rows[0]?.whatsapp === "11912345678");
+await deveFalhar("whatsapp invalido e recusado", profC, `update perfis set whatsapp = '123' where id = $1`, [profC.id]);
+confere("professor edita o proprio whatsapp",
+  (await comoUsuario(profC, `update perfis set whatsapp = '11999998888' where id = $1 returning id`, [profC.id])).length === 1);
+
+// ---------- Como e em casa (familia) ----------
+console.log("\nComo e em casa");
+await comoUsuario(mae, `insert into aluno_casa (aluno_id, como_em_casa, medicacoes) values ($1, 'calma de manha', 'remedio X 1x ao dia')`, [aluno.id]);
+confere("familia ve a propria ficha", (await comoUsuario(mae, `select * from aluno_casa`)).length === 1);
+confere("familia edita a propria ficha",
+  (await comoUsuario(mae, `update aluno_casa set rotina_estudo = 'depois do lanche' where aluno_id = $1 returning aluno_id`, [aluno.id])).length === 1);
+confere("professor do aluno le a ficha", (await comoUsuario(profA, `select medicacoes from aluno_casa`)).length === 1);
+confere("professor B NAO le a ficha", (await comoUsuario(profB, `select * from aluno_casa`)).length === 0);
+confere("escola NAO le a ficha (tem saude)", (await comoUsuario(escola, `select * from aluno_casa`)).length === 0);
+confere("professor NAO edita a ficha da familia",
+  (await comoUsuario(profA, `update aluno_casa set como_em_casa = 'x' returning aluno_id`)).length === 0);
+await deveFalhar("familia sem consentimento NAO preenche", tia,
+  `insert into aluno_casa (aluno_id, como_em_casa) values ($1, 'x')`, [aluno.id]);
+await deveFalhar("familia NAO preenche em nome de outra", mae,
+  `insert into aluno_casa (aluno_id, familia_id, como_em_casa) values ($1, $2, 'x')`, [aluno.id, tia.id]);
+await deveFalhar("visitante NAO le a ficha", null, `select * from aluno_casa`);
+
+// ---------- Dicas do professor para a familia ----------
+console.log("\nDicas para a familia");
+const [ativ] = await comoUsuario(profA,
+  `insert into atividades (aluno_id, titulo, conteudo_adaptado, status, compartilhado_com_familia) values ($1, 'Soma', 'conteudo', 'revisado', true) returning id`, [aluno.id]);
+confere("professor escreve dicas para a familia",
+  (await comoUsuario(profA, `update atividades set dicas_familia = 'use feijoes' where id = $1 returning id`, [ativ.id])).length === 1);
+confere("familia le as dicas", (await comoUsuario(mae, `select dicas_familia from atividades where id = $1`, [ativ.id]))[0]?.dicas_familia === "use feijoes");
+confere("familia NAO edita as dicas",
+  (await comoUsuario(mae, `update atividades set dicas_familia = 'x' where id = $1 returning id`, [ativ.id]).catch(() => [])).length === 0);
+
+
+// ---------- Especialista ----------
+console.log("\nEspecialista");
+const dadosEsp = { tipo: "especialista", nome: "Dra. Ana", whatsapp: "11988887777", profissao: "terapeuta_ocupacional",
+  registro: "CREFITO 123", clinica: "Clinica Brincar", local: "Sao Paulo - SP", atuacao: "Terapia ocupacional infantil" };
+try { await criarConta("intrusa.esp@teste.com", { ...dadosEsp }); confere("especialista sem convite e recusado", false); }
+catch { confere("especialista sem convite e recusado", true); }
+await deveFalhar("professor NAO convida especialista", profA,
+  `insert into convites (tipo, email, escola_id) values ('especialista', 'ana@teste.com', $1)`, [esc.id]);
+const [convEsp] = await comoUsuario(escola,
+  `insert into convites (tipo, email, escola_id) values ('especialista', 'ana@teste.com', $1) returning token`, [esc.id]);
+try { await criarConta("ana@teste.com", { ...dadosEsp, tipo: "familia", convite: convEsp.token }); confere("convite de especialista nao vira familia", false); }
+catch { confere("convite de especialista nao vira familia", true); }
+const ana = await criarConta("ana@teste.com", { ...dadosEsp, convite: convEsp.token });
+confere("especialista criado pelo convite",
+  (await db.query(`select p.tipo, e.clinica from perfis p join especialistas e on e.id = p.id where p.id = $1`, [ana.id])).rows[0]?.tipo === "especialista");
+confere("especialista ja entra vinculado a escola",
+  (await comoUsuario(ana, `select * from escola_especialistas`)).length === 1);
+confere("especialista ve a escola", (await comoUsuario(ana, `select nome from escolas`)).length === 1);
+confere("especialista sem vinculo de aluno NAO ve alunos", (await comoUsuario(ana, `select * from alunos`)).length === 0);
+confere("escola ve os dados do especialista", (await comoUsuario(escola, `select clinica from especialistas`)).length === 1);
+confere("professor B NAO ve o especialista", (await comoUsuario(profB, `select * from especialistas`)).length === 0);
+
+await deveFalhar("professor NAO vincula especialista a aluno", profA,
+  `insert into especialista_alunos (aluno_id, especialista_id, escola_id) values ($1, $2, $3)`, [aluno.id, ana.id, esc.id]);
+await deveFalhar("especialista NAO se vincula sozinho ao aluno", ana,
+  `insert into especialista_alunos (aluno_id, especialista_id, escola_id) values ($1, $2, $3)`, [aluno.id, ana.id, esc.id]);
+const [alunoB] = await comoUsuario(profB, `insert into alunos (nome) values ('Teo') returning id`);
+await deveFalhar("escola NAO vincula aluno de professor de fora", escola,
+  `insert into especialista_alunos (aluno_id, especialista_id, escola_id) values ($1, $2, $3)`, [alunoB.id, ana.id, esc.id]);
+await comoUsuario(escola,
+  `insert into especialista_alunos (aluno_id, especialista_id, escola_id, ver_relatorios) values ($1, $2, $3, false)`, [aluno.id, ana.id, esc.id]);
+confere("especialista ve o aluno vinculado", (await comoUsuario(ana, `select nome from alunos`)).length === 1);
+confere("especialista NAO ve saude do aluno", (await comoUsuario(ana, `select * from alunos_saude`)).length === 0);
+confere("especialista NAO ve observacoes", (await comoUsuario(ana, `select * from observacoes`)).length === 0);
+confere("especialista NAO ve a ficha de casa", (await comoUsuario(ana, `select * from aluno_casa`)).length === 0);
+await comoUsuario(profA,
+  `insert into relatorios (aluno_id, periodo_inicio, periodo_fim, versao_familia, versao_tecnica, status) values ($1, '2026-08-01', '2026-09-30', 'f', 't', 'revisado')`, [aluno.id]);
+confere("sem permissao, especialista NAO ve relatorios", (await comoUsuario(ana, `select * from relatorios`)).length === 0);
+await comoUsuario(escola, `update especialista_alunos set ver_relatorios = true where aluno_id = $1`, [aluno.id]);
+const relsAna = await comoUsuario(ana, `select status from relatorios`);
+confere("com permissao, especialista ve so relatorios revisados", relsAna.length >= 1 && relsAna.every((r) => r.status === "revisado"));
+confere("especialista ve o nome do professor", (await comoUsuario(ana, `select nome from perfis where id = $1`, [profA.id])).length === 1);
+confere("professor ve o nome do especialista", (await comoUsuario(profA, `select nome from perfis where id = $1`, [ana.id])).length === 1);
+confere("familia ve quem acompanha o filho", (await comoUsuario(mae, `select * from especialista_alunos`)).length === 1);
+
+await comoUsuario(ana, `insert into especialista_registros (aluno_id, tipo, texto) values ($1, 'orientacao', 'usar pausas sensoriais')`, [aluno.id]);
+await comoUsuario(ana, `insert into especialista_registros (aluno_id, tipo, texto) values ($1, 'clinico', 'medicacao X')`, [aluno.id]);
+await deveFalhar("especialista NAO registra em aluno que nao acompanha", ana,
+  `insert into especialista_registros (aluno_id, tipo, texto) values ($1, 'orientacao', 'x')`, [alunoB.id]);
+await deveFalhar("especialista NAO registra em nome de outro", ana,
+  `insert into especialista_registros (aluno_id, especialista_id, tipo, texto) values ($1, $2, 'orientacao', 'x')`, [aluno.id, profA.id]);
+confere("professor ve os dois registros", (await comoUsuario(profA, `select * from especialista_registros`)).length === 2);
+confere("familia ve os dois registros", (await comoUsuario(mae, `select * from especialista_registros`)).length === 2);
+confere("escola ve so a orientacao (nao o clinico)",
+  (await comoUsuario(escola, `select tipo from especialista_registros`)).map((r) => r.tipo).join() === "orientacao");
+confere("professor B NAO ve registros", (await comoUsuario(profB, `select * from especialista_registros`)).length === 0);
+confere("especialista NAO edita registro",
+  (await comoUsuario(ana, `update especialista_registros set texto = 'x' returning id`).catch(() => [])).length === 0);
+await comoUsuario(escola, `update especialista_alunos set pode_registrar = false where aluno_id = $1`, [aluno.id]);
+await deveFalhar("sem permissao, especialista NAO registra", ana,
+  `insert into especialista_registros (aluno_id, tipo, texto) values ($1, 'orientacao', 'x')`, [aluno.id]);
+
+// Se o professor sai da escola, o especialista perde o acesso ao aluno
+await db.query(`delete from escola_professores where professor_id = $1`, [profA.id]);
+confere("professor saiu da escola: especialista NAO ve mais o aluno", (await comoUsuario(ana, `select * from alunos`)).length === 0);
+await db.query(`insert into escola_professores (escola_id, professor_id) values ($1, $2)`, [esc.id, profA.id]);
+// Escola desvincula o especialista: acompanhamentos caem juntos
+await comoUsuario(escola, `delete from escola_especialistas where especialista_id = $1`, [ana.id]);
+confere("escola desvinculou: acompanhamentos apagados", (await db.query(`select * from especialista_alunos`)).rows.length === 0);
+confere("escola desvinculou: especialista NAO ve o aluno", (await comoUsuario(ana, `select * from alunos`)).length === 0);
+confere("registros continuam para o professor", (await comoUsuario(profA, `select * from especialista_registros`)).length === 2);
+// Segundo convite, com conta ja existente
+const [convEsp2] = await comoUsuario(escola,
+  `insert into convites (tipo, email, escola_id) values ('especialista', 'ana@teste.com', $1) returning token`, [esc.id]);
+await deveFalhar("professor NAO aceita convite de especialista", profA, `select aceitar_convite($1)`, [convEsp2.token]);
+const [aceito] = await comoUsuario(ana, `select aceitar_convite($1) as tipo`, [convEsp2.token]);
+confere("especialista aceita novo convite logado", aceito?.tipo === "especialista");
+
+
+// ---------- WhatsApp e privado ----------
+console.log("\nWhatsApp privado");
+await deveFalhar("familia NAO le o WhatsApp do professor", mae, `select whatsapp from perfis where id = $1`, [profA.id]);
+await deveFalhar("escola NAO le o WhatsApp do professor", escola, `select whatsapp from perfis where id = $1`, [profA.id]);
+confere("familia ainda ve o nome do professor", (await comoUsuario(mae, `select nome from perfis where id = $1`, [profA.id])).length === 1);
+confere("cada um le o proprio WhatsApp pela funcao",
+  (await comoUsuario(profC, `select meu_whatsapp() as w`))[0]?.w === "11999998888");
+await deveFalhar("visitante nao chama meu_whatsapp", null, `select meu_whatsapp()`);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

@@ -7,8 +7,9 @@ import { enviarEmail } from "@/lib/email/enviar";
 import { boasVindasFamilia } from "@/lib/email/modelos";
 import { lerCampo, type EstadoFormulario } from "@/lib/formulario";
 import { ErroIA, perguntarIA } from "@/lib/ia/cliente";
+import { casaParaIA } from "@/lib/ia/casa";
 import { SISTEMA_REFORCO, descreverPerfil } from "@/lib/ia/prompts";
-import { TEMPOS_REFORCO, TIPOS_REFORCO, rotuloTipoReforco } from "@/lib/opcoes-cadastro";
+import { CAMPOS_CASA, TEMPOS_REFORCO, TIPOS_REFORCO, rotuloTipoReforco, type CampoCasa } from "@/lib/opcoes-cadastro";
 import { hoje } from "@/lib/datas";
 import { enderecoDoSite } from "@/lib/site";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -110,6 +111,7 @@ export async function pedirApoio(alunoId: string, _: EstadoFormulario, formData:
 
   const { data: aluno } = await supabase.from("alunos").select("*").eq("id", alunoId).maybeSingle();
   if (!aluno) return { erro: "Não encontramos o perfil do seu filho.", valores };
+  const casa = await casaParaIA(supabase, alunoId);
 
   let caminho: string | null = null;
   const anexos: Parameters<typeof perguntarIA>[0]["conteudo"] = [];
@@ -140,7 +142,7 @@ export async function pedirApoio(alunoId: string, _: EstadoFormulario, formData:
             `Matéria: ${materia}`,
             tema ? `Conteúdo: ${tema}` : "",
             `Tempo disponível: ${tempoMinutos} minutos`,
-            `Perfil da criança:\n${descreverPerfil(aluno)}`,
+            `Perfil da criança:\n${descreverPerfil(aluno, casa)}`,
             pedido ? `O que o adulto contou:\n${pedido}` : "",
             anexos.length ? "(Foto ou PDF da lição anexado.)" : "",
           ]
@@ -166,4 +168,32 @@ export async function pedirApoio(alunoId: string, _: EstadoFormulario, formData:
   if (error) return { erro: "Não foi possível salvar a resposta.", valores };
   refresh();
   return { sucesso: "Pronto! A orientação e o material estão logo abaixo." };
+}
+
+// Ficha "Como e em casa": cada responsavel tem a sua por crianca.
+// Atualiza se ja existe; senao, cria (o RLS confere o vinculo e o consentimento).
+export async function salvarComoEmCasa(alunoId: string, _: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
+  const campos = Object.fromEntries(
+    CAMPOS_CASA.map((c) => [c.nome, lerCampo(formData, c.nome).slice(0, 2000) || null]),
+  ) as Record<CampoCasa, string | null>;
+  const valores = Object.fromEntries(Object.entries(campos).map(([k, v]) => [k, v ?? ""]));
+
+  const supabase = await criarClienteServidor();
+  const usuario = await buscarUsuario();
+  if (!usuario) return { erro: "Sessão expirada. Entre de novo.", valores };
+
+  const { data: atualizado, error } = await supabase
+    .from("aluno_casa")
+    .update(campos)
+    .eq("aluno_id", alunoId)
+    .eq("familia_id", usuario.id)
+    .select("aluno_id");
+  if (!error && !atualizado?.length) {
+    const { error: e } = await supabase.from("aluno_casa").insert({ aluno_id: alunoId, ...campos });
+    if (e) return { erro: "Não foi possível salvar.", valores };
+  } else if (error) {
+    return { erro: "Não foi possível salvar.", valores };
+  }
+  refresh();
+  return { sucesso: "Salvo! O professor já pode ver.", valores };
 }

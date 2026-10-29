@@ -1,8 +1,8 @@
 import { type NextRequest } from "next/server";
-import { boasVindasEscola, boasVindasFamilia, boasVindasProfessor } from "@/lib/email/modelos";
+import { boasVindasEscola, boasVindasFamilia, boasVindasProfessor, conviteEspecialista } from "@/lib/email/modelos";
 
 // Pre-visualizacao dos e-mails, so em desenvolvimento:
-// /dev/emails/professor, /dev/emails/escola, /dev/emails/familia
+// /dev/emails/professor, /dev/emails/escola, /dev/emails/familia, /dev/emails/especialista
 export async function GET(request: NextRequest, { params }: RouteContext<"/dev/emails/[perfil]">) {
   if (process.env.NODE_ENV !== "development") {
     return new Response("Não encontrado", { status: 404 });
@@ -14,9 +14,10 @@ export async function GET(request: NextRequest, { params }: RouteContext<"/dev/e
     professor: () => boasVindasProfessor({ nome: "Ana", site }),
     escola: () => boasVindasEscola({ nome: "Carla", escola: "Escola Raio de Sol", site }),
     familia: () => boasVindasFamilia({ nome: "Marina", aluno: "Lia", alunoId: "exemplo", site }),
+    especialista: () => conviteEspecialista({ escola: "Escola Raio de Sol", link: `${site}/convite/exemplo`, site }),
   };
   const gerar = exemplos[perfil as keyof typeof exemplos];
-  if (!gerar) return new Response("Use professor, escola ou familia", { status: 404 });
+  if (!gerar) return new Response("Use professor, escola, familia ou especialista", { status: 404 });
 
   const email = gerar();
   // Mostra o assunto acima do e-mail, como apareceria na caixa de entrada

@@ -4,7 +4,7 @@
 // A senha vai direto do servidor para o Supabase e nunca e guardada por nos.
 import { redirect } from "next/navigation";
 import { AREA_DO_PERFIL } from "@/lib/auth";
-import { destinoSeguro } from "@/lib/formulario";
+import { destinoSeguro, lerWhatsapp } from "@/lib/formulario";
 import { ATUACOES, CARGOS, ETAPAS, REDES, valorValido } from "@/lib/opcoes-cadastro";
 import { enviarBoasVindas } from "@/lib/email/boas-vindas";
 import { enderecoDoSite } from "@/lib/site";
@@ -56,6 +56,8 @@ export async function cadastrar(
   const escola = lerCampo(formData, "escola");
   const email = lerCampo(formData, "email").toLowerCase();
   const senha = lerSenha(formData);
+  const whatsappDigitado = lerCampo(formData, "whatsapp");
+  const whatsapp = lerWhatsapp(formData);
   // So do professor
   const rede = lerCampo(formData, "rede");
   const etapas = formData.getAll("etapas").map(String);
@@ -64,7 +66,7 @@ export async function cadastrar(
   const cargo = lerCampo(formData, "cargo");
   const proximo = destinoSeguro(lerCampo(formData, "proximo"));
 
-  const valores = { tipo, nome, escola, email, rede, etapas: etapas.join(","), atuacao, cargo };
+  const valores = { tipo, nome, escola, email, whatsapp: whatsappDigitado, rede, etapas: etapas.join(","), atuacao, cargo };
 
   // Conferimos tudo aqui no servidor tambem: o "required" do navegador
   // pode ser burlado por quem mexe no codigo da pagina
@@ -80,13 +82,14 @@ export async function cadastrar(
     if (!valorValido(ATUACOES, atuacao)) {
       return { erro: "Informe se você é de base comum ou de uma matéria.", valores };
     }
-    dadosPerfil = { tipo, nome, escola, rede, etapas, atuacao };
+    dadosPerfil = { tipo, nome, escola, whatsapp, rede, etapas, atuacao };
   } else {
     if (!valorValido(CARGOS, cargo)) return { erro: "Informe o seu cargo na escola.", valores };
-    dadosPerfil = { tipo, nome, escola, cargo };
+    dadosPerfil = { tipo, nome, escola, whatsapp, cargo };
   }
 
   if (!EMAIL_VALIDO.test(email)) return { erro: "Informe um e-mail válido.", valores };
+  if (!whatsapp) return { erro: "Informe um WhatsApp com DDD, por exemplo (11) 91234-5678.", valores };
   if (senha.length < SENHA_MINIMA) {
     return { erro: `A senha precisa ter pelo menos ${SENHA_MINIMA} caracteres.`, valores };
   }

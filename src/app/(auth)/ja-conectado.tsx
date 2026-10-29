@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AREA_DO_PERFIL, buscarUsuario } from "@/lib/auth";
 import { sairETrocarConta } from "./actions";
 
-const TIPO: Record<string, string> = { professor: "professor(a)", escola: "escola", familia: "família" };
+const TIPO: Record<string, string> = { professor: "professor(a)", escola: "escola", familia: "família", especialista: "especialista" };
 
 // Nas telas de entrar/criar conta: avisa se ja existe alguem conectado neste navegador
 export async function JaConectado() {

@@ -4,6 +4,7 @@
 export const REDES = [
   { valor: "publica", rotulo: "Pública" },
   { valor: "privada", rotulo: "Privada" },
+  { valor: "ambas", rotulo: "As duas" },
 ] as const;
 
 export const ETAPAS = [
@@ -24,7 +25,18 @@ export const ATUACOES = [
     rotulo: "Uma matéria",
     descricao: "Dou aula de uma matéria específica, como Inglês ou Educação Física.",
   },
+  {
+    valor: "ambos",
+    rotulo: "As duas coisas",
+    descricao: "Tenho turma de base comum e também dou aula de uma matéria específica.",
+  },
 ] as const;
+
+export const ROTULO_ATUACAO: Record<string, string> = {
+  polivalente: "Base comum",
+  especialista: "Uma matéria",
+  ambos: "Base comum e uma matéria",
+};
 
 export const CARGOS = [
   { valor: "direcao", rotulo: "Direção" },
@@ -71,3 +83,73 @@ export function rotuloTipoReforco(tipo: string) {
 export function valorValido(opcoes: readonly { valor: string }[], valor: string) {
   return opcoes.some((o) => o.valor === valor);
 }
+
+// Ficha "Como e em casa", preenchida pela familia. So os campos com ia: true
+// ajudam a IA (sem nome). Saude e "outras" (que pode ter saude) nunca vao.
+// Quem ve a ficha: so a familia e o professor do aluno.
+export const CAMPOS_CASA = [
+  {
+    nome: "como_em_casa",
+    rotulo: "Como ele(a) é em casa",
+    dica: "Ex.: calmo de manhã e mais agitado à noite; adora ajudar na cozinha; não gosta de barulho alto.",
+    ia: true,
+  },
+  {
+    nome: "rotina_estudo",
+    rotulo: "Como faz as tarefas em casa",
+    dica: "Ex.: rende mais depois do lanche; precisa de pausas a cada 15 minutos; prefere fazer no chão da sala.",
+    ia: true,
+  },
+  {
+    nome: "medicacoes",
+    rotulo: "Medicações",
+    dica: "Quais, quantas vezes ao dia e em que horário. Se não usa, pode deixar em branco.",
+    ia: false,
+  },
+  {
+    nome: "acompanhamentos",
+    rotulo: "Acompanhamentos",
+    dica: "Ex.: neurologista, terapia ocupacional, fonoaudiologia, psicopedagogia. Com que frequência.",
+    ia: false,
+  },
+  {
+    nome: "outras",
+    rotulo: "Outras informações importantes",
+    dica: "Mudanças na família, sono, alimentação, algo que a escola precisa saber.",
+    ia: false,
+  },
+] as const;
+
+export type CampoCasa = (typeof CAMPOS_CASA)[number]["nome"];
+
+// Especialista: profissao (o "quem e voce?" do cadastro). Precisa bater com o check do SQL.
+export const PROFISSOES = [
+  { valor: "psicologo", rotulo: "Psicólogo(a)" },
+  { valor: "psicopedagogo", rotulo: "Psicopedagogo(a)" },
+  { valor: "neuropsicopedagogo", rotulo: "Neuropsicopedagogo(a)" },
+  { valor: "neuropsicologo", rotulo: "Neuropsicólogo(a)" },
+  { valor: "terapeuta_ocupacional", rotulo: "Terapeuta ocupacional" },
+  { valor: "fonoaudiologo", rotulo: "Fonoaudiólogo(a)" },
+  { valor: "neuropediatra", rotulo: "Neuropediatra / neurologista" },
+  { valor: "psiquiatra", rotulo: "Psiquiatra" },
+  { valor: "fisioterapeuta", rotulo: "Fisioterapeuta" },
+  { valor: "outro", rotulo: "Outra especialidade" },
+] as const;
+
+export function rotuloProfissao(valor: string | null | undefined) {
+  return PROFISSOES.find((p) => p.valor === valor)?.rotulo ?? "Especialista";
+}
+
+// Registros do especialista sobre o aluno
+export const TIPOS_REGISTRO_ESPECIALISTA = [
+  {
+    valor: "orientacao",
+    rotulo: "Orientação",
+    descricao: "Estratégias e observações para a escola e a família. Professor, família e coordenação veem.",
+  },
+  {
+    valor: "clinico",
+    rotulo: "Informação clínica",
+    descricao: "Medicação, receitas, informações de saúde. Só o professor do aluno e a família veem (a coordenação não).",
+  },
+] as const;

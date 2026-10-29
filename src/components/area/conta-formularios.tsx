@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Aviso, BotaoEnviar, Campo, CampoSenha } from "@/components/formulario";
-import { ATUACOES, CARGOS, ETAPAS, REDES } from "@/lib/opcoes-cadastro";
+import { Aviso, BotaoEnviar, Campo, CampoSenha, CampoWhatsapp } from "@/components/formulario";
+import { formatarWhatsapp } from "@/lib/formulario";
+import { ATUACOES, CARGOS, ETAPAS, PROFISSOES, REDES } from "@/lib/opcoes-cadastro";
 import { reduzirNoCampo } from "@/lib/reduzir-imagem";
 import { alterarEmail, alterarSenha, enviarFoto, removerFoto, salvarDados } from "@/app/(app)/conta-acoes";
 
@@ -62,13 +63,19 @@ export function FormularioFoto({ urlAtual, nome }: { urlAtual: string | null; no
 }
 
 type DadosConta = {
-  tipo: "professor" | "escola" | "familia";
+  tipo: "professor" | "escola" | "familia" | "especialista";
   nome: string;
+  whatsapp?: string | null;
   escola?: string;
   rede?: string;
   etapas?: string[];
   atuacao?: string;
   cargo?: string;
+  profissao?: string;
+  registro?: string | null;
+  clinica?: string;
+  local?: string;
+  atuacaoEspecialista?: string;
 };
 
 export function FormularioDados({ dados }: { dados: DadosConta }) {
@@ -86,15 +93,17 @@ export function FormularioDados({ dados }: { dados: DadosConta }) {
         autoComplete="name"
       />
 
-      {dados.tipo !== "familia" && (
+      <CampoWhatsapp defaultValue={formatarWhatsapp(dados.whatsapp)} />
+
+      {(dados.tipo === "professor" || dados.tipo === "escola") && (
         <Campo rotulo="Nome da escola" name="escola" required defaultValue={dados.escola} autoComplete="organization" />
       )}
 
       {dados.tipo === "professor" && (
         <>
           <fieldset>
-            <legend className="mb-2 font-medium">A escola é</legend>
-            <div className="flex gap-3">
+            <legend className="mb-2 font-medium">Você trabalha na rede</legend>
+            <div className="flex flex-wrap gap-3">
               {REDES.map((r) => (
                 <label key={r.valor} className={`${OPCAO} flex-1`}>
                   <input type="radio" name="rede" value={r.valor} defaultChecked={dados.rede === r.valor} className="size-5 accent-petroleo" />
@@ -147,6 +156,32 @@ export function FormularioDados({ dados }: { dados: DadosConta }) {
             ))}
           </select>
         </div>
+      )}
+
+      {dados.tipo === "especialista" && (
+        <>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="profissao" className="font-medium">
+              Especialidade
+            </label>
+            <select
+              id="profissao"
+              name="profissao"
+              defaultValue={dados.profissao}
+              className="rounded-xl border-2 border-marca/25 bg-white px-4 py-3 text-marca focus:border-petroleo"
+            >
+              {PROFISSOES.map((p) => (
+                <option key={p.valor} value={p.valor}>
+                  {p.rotulo}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Campo rotulo="Registro profissional (opcional)" name="registro" maxLength={60} defaultValue={dados.registro ?? ""} dica="CRM, CRP, CREFITO, CRFa..." />
+          <Campo rotulo="Clínica ou consultório" name="clinica" required maxLength={160} defaultValue={dados.clinica} />
+          <Campo rotulo="Onde fica" name="local" required maxLength={160} defaultValue={dados.local} />
+          <Campo rotulo="Como você atua" name="atuacao_especialista" required maxLength={300} defaultValue={dados.atuacaoEspecialista} />
+        </>
       )}
 
       <div>

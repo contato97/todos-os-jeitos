@@ -5,8 +5,8 @@
 import { refresh } from "next/cache";
 import sharp from "sharp";
 import { AREA_DO_PERFIL, buscarUsuario } from "@/lib/auth";
-import { EMAIL_VALIDO, lerCampo, type EstadoFormulario } from "@/lib/formulario";
-import { ATUACOES, CARGOS, ETAPAS, REDES, valorValido } from "@/lib/opcoes-cadastro";
+import { EMAIL_VALIDO, lerCampo, lerWhatsapp, type EstadoFormulario } from "@/lib/formulario";
+import { ATUACOES, CARGOS, ETAPAS, PROFISSOES, REDES, valorValido } from "@/lib/opcoes-cadastro";
 import { enderecoDoSite } from "@/lib/site";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { SENHA_MINIMA, mensagemDeErro } from "../(auth)/mensagens";
@@ -19,9 +19,11 @@ export async function salvarDados(_: EstadoFormulario, formData: FormData): Prom
   if (!usuario) return { erro: "Sessão expirada. Entre de novo." };
   const nome = lerCampo(formData, "nome");
   if (!nome) return { erro: "Informe seu nome." };
+  const whatsapp = lerWhatsapp(formData);
+  if (!whatsapp) return { erro: "Informe um WhatsApp com DDD, por exemplo (11) 91234-5678." };
 
   const supabase = await criarClienteServidor();
-  const { error } = await supabase.from("perfis").update({ nome }).eq("id", usuario.id);
+  const { error } = await supabase.from("perfis").update({ nome, whatsapp }).eq("id", usuario.id);
   if (error) return { erro: "Não foi possível salvar." };
 
   if (usuario.tipo === "professor") {
@@ -50,6 +52,21 @@ export async function salvarDados(_: EstadoFormulario, formData: FormData): Prom
       .update({ nome: escola, cargo_responsavel: cargo })
       .eq("responsavel_id", usuario.id);
     if (e) return { erro: "Não foi possível salvar os dados da escola." };
+  }
+
+  if (usuario.tipo === "especialista") {
+    const profissao = lerCampo(formData, "profissao");
+    const registro = lerCampo(formData, "registro").slice(0, 60) || null;
+    const clinica = lerCampo(formData, "clinica").slice(0, 160);
+    const local = lerCampo(formData, "local").slice(0, 160);
+    const atuacao = lerCampo(formData, "atuacao_especialista").slice(0, 300);
+    if (!valorValido(PROFISSOES, profissao)) return { erro: "Escolha a sua especialidade." };
+    if (!clinica || !local || !atuacao) return { erro: "Preencha clínica, local e como você atua." };
+    const { error: e } = await supabase
+      .from("especialistas")
+      .update({ profissao, registro, clinica, local, atuacao })
+      .eq("id", usuario.id);
+    if (e) return { erro: "Não foi possível salvar os dados profissionais." };
   }
 
   refresh();

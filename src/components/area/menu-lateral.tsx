@@ -12,6 +12,7 @@ import {
   FaEnvelopeOpenText,
   FaUserGear,
   FaUsers,
+  FaUserDoctor,
   FaWandMagicSparkles,
 } from "react-icons/fa6";
 
@@ -27,6 +28,7 @@ const ICONES = {
   professores: FaChalkboardUser,
   filhos: FaChildReaching,
   historico: FaBookOpen,
+  especialistas: FaUserDoctor,
 };
 
 export type ItemMenu = { href: string; rotulo: string; icone: keyof typeof ICONES; exato?: boolean; destaque?: boolean };

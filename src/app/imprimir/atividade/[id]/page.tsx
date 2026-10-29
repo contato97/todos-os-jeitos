@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { versaoDoAluno } from "@/lib/atividade-texto";
+import { buscarUsuario } from "@/lib/auth";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { Documento } from "../../documento";
 
-// Professor (dono) ou familia (se compartilhada) podem abrir: o RLS decide
+// Professor (dono) e escola vinculada podem imprimir (o RLS decide).
+// A familia so visualiza na plataforma, sem baixar.
 export default function ImprimirAtividade({ params, searchParams }: PageProps<"/imprimir/atividade/[id]">) {
   return (
     <Suspense>
@@ -22,6 +24,8 @@ async function Conteudo({
 }) {
   const { id } = await params;
   const somenteAluno = (await searchParams).versao !== "completa";
+  const usuario = await buscarUsuario();
+  if (!usuario || usuario.tipo === "familia") notFound();
   const supabase = await criarClienteServidor();
   const { data: atividade } = await supabase
     .from("atividades")

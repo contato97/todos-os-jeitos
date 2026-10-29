@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { ComoUsar } from "@/components/area/como-usar";
 import { Carregando } from "@/components/area/em-breve";
+import { buscarRegistrosEspecialistas } from "@/components/area/registros-especialistas";
 import { AJUDA_FAMILIA } from "@/lib/ajuda";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { HistoricoFamilia } from "./historico-familia";
@@ -22,7 +23,7 @@ type RelatorioFamilia = { id: string; periodo_inicio: string; periodo_fim: strin
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await criarClienteServidor();
-  const [{ data: observacoes }, { data: atividades }, { data: relatorios }, { data: aluno }] = await Promise.all([
+  const [{ data: observacoes }, { data: atividades }, { data: relatorios }, { data: aluno }, registrosEsp] = await Promise.all([
     supabase
       .from("observacoes")
       .select("id, texto, data_observacao")
@@ -30,9 +31,10 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
       .eq("origem", "escola")
       .order("data_observacao", { ascending: false })
       .limit(30),
-    supabase.from("atividades").select("id, titulo, conteudo_adaptado, atualizado_em").eq("aluno_id", id).order("atualizado_em", { ascending: false }),
+    supabase.from("atividades").select("id, titulo, conteudo_adaptado, dicas_familia, atualizado_em").eq("aluno_id", id).order("atualizado_em", { ascending: false }),
     supabase.rpc("relatorios_para_familia", { p_aluno: id }),
     supabase.from("alunos").select("professor_id").eq("id", id).maybeSingle(),
+    buscarRegistrosEspecialistas(supabase, id),
   ]);
   const { data: professor } = aluno
     ? await supabase.from("perfis").select("nome").eq("id", aluno.professor_id).maybeSingle()
@@ -46,6 +48,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
       relatorios={rels}
       atividades={atividades ?? []}
       observacoes={observacoes ?? []}
+      registrosEspecialistas={registrosEsp}
     />
   );
 }

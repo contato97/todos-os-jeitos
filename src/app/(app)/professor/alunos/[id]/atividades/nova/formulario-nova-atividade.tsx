@@ -168,7 +168,7 @@ export function FormularioNovaAtividade({ alunoId, retorno }: { alunoId: string;
         name="orientacoes"
         rows={2}
         defaultValue={estado.valores?.orientacoes}
-        dica="Ex.: manter as 5 questões da prova; ele já domina a tabuada do 2; usar letra de forma."
+        dica="Ex.: manter as 5 questões da prova; ele já domina a tabuada do 2; usar letra bastão."
       />
 
       <div className="flex flex-wrap items-center gap-4">

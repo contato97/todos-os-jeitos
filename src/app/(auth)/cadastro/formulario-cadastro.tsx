@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useActionState, useState } from "react";
-import { Aviso, BotaoEnviar, Campo, CampoSenha } from "@/components/formulario";
+import { Aviso, BotaoEnviar, Campo, CampoSenha, CampoWhatsapp } from "@/components/formulario";
 import { ATUACOES, CARGOS, ETAPAS, REDES } from "@/lib/opcoes-cadastro";
 import { cadastrar } from "../actions";
 import { SENHA_MINIMA, type EstadoFormulario } from "../mensagens";
@@ -75,6 +75,7 @@ function CamposProfessor({ estado }: { estado: EstadoFormulario }) {
     <>
       <Campo rotulo="Seu nome" name="nome" autoComplete="name" required defaultValue={v.nome} />
       <Campo rotulo="E-mail" name="email" type="email" autoComplete="email" required defaultValue={v.email} />
+      <CampoWhatsapp defaultValue={v.whatsapp} />
       <Campo
         rotulo="Nome da escola"
         name="escola"
@@ -85,8 +86,8 @@ function CamposProfessor({ estado }: { estado: EstadoFormulario }) {
       />
 
       <fieldset>
-        <legend className="mb-2 font-medium">A escola é</legend>
-        <div className="flex gap-3">
+        <legend className="mb-2 font-medium">Você trabalha na rede</legend>
+        <div className="flex flex-wrap gap-3">
           {REDES.map((r) => (
             <label key={r.valor} className={`${ESTILO_OPCAO} flex-1 items-center`}>
               <input
@@ -176,6 +177,7 @@ function CamposEscola({ estado }: { estado: EstadoFormulario }) {
       </div>
 
       <Campo rotulo="E-mail" name="email" type="email" autoComplete="email" required defaultValue={v.email} />
+      <CampoWhatsapp defaultValue={v.whatsapp} />
     </>
   );
 }

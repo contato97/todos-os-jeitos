@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { BarraExportar } from "@/components/barra-exportar";
 import { Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
 import { versaoDoAluno } from "@/lib/atividade-texto";
+import { RegistrosEspecialistas, type RegistroEspecialista } from "@/components/area/registros-especialistas";
 
 // Parte visual do historico do filho. Fica separada da busca de dados para ser
 // usada tambem na vitrine com dados de exemplo (/dev/vitrine), sem duplicar codigo.
@@ -9,12 +9,13 @@ export type DadosHistorico = {
   id: string; // id do aluno
   professorNome?: string | null;
   relatorios: { id: string; periodo_inicio: string; periodo_fim: string; versao_familia: string | null }[];
-  atividades: { id: string; titulo: string; conteudo_adaptado: string | null }[];
+  atividades: { id: string; titulo: string; conteudo_adaptado: string | null; dicas_familia?: string | null }[];
   observacoes: { id: string; texto: string; data_observacao: string }[];
+  registrosEspecialistas?: RegistroEspecialista[];
   abertos?: boolean; // vitrine: mostra os itens ja expandidos
 };
 
-export function HistoricoFamilia({ id, professorNome, relatorios: rels, atividades, observacoes, abertos }: DadosHistorico) {
+export function HistoricoFamilia({ id, professorNome, relatorios: rels, atividades, observacoes, registrosEspecialistas = [], abertos }: DadosHistorico) {
   return (
     <div className="space-y-8">
       {professorNome && <p>Professor(a): <strong>{professorNome}</strong></p>}
@@ -49,7 +50,7 @@ export function HistoricoFamilia({ id, professorNome, relatorios: rels, atividad
       <section aria-labelledby="titulo-ativ">
         <h2 id="titulo-ativ" className="mb-3 text-xl font-semibold">Atividades adaptadas</h2>
         {!atividades.length ? (
-          <Vazio>As atividades que o professor compartilhar aparecem aqui, para você acompanhar ou repetir em casa.</Vazio>
+          <Vazio>As atividades que o professor compartilhar aparecem aqui, na versão usada com o aluno, para você acompanhar o que está sendo feito em sala.</Vazio>
         ) : (
           <ul className="space-y-3">
             {atividades.map((a) => (
@@ -59,9 +60,12 @@ export function HistoricoFamilia({ id, professorNome, relatorios: rels, atividad
                     <summary className="cursor-pointer text-lg font-semibold">{a.titulo}</summary>
                     <div className="mt-3">
                       <TextoFormatado texto={versaoDoAluno(a.conteudo_adaptado ?? "")} />
-                      <div className="mt-5 max-w-sm">
-                        <BarraExportar atividadeId={a.id} titulo={a.titulo} texto={a.conteudo_adaptado ?? ""} />
-                      </div>
+                      {a.dicas_familia && (
+                        <div className="mt-5 rounded-2xl border-l-4 border-mostarda bg-mostarda/10 p-4">
+                          <h3 className="font-semibold">Dicas do professor para vocês</h3>
+                          <p className="mt-1 whitespace-pre-line">{a.dicas_familia}</p>
+                        </div>
+                      )}
                     </div>
                   </details>
                 </Cartao>
@@ -72,7 +76,7 @@ export function HistoricoFamilia({ id, professorNome, relatorios: rels, atividad
       </section>
 
       <section aria-labelledby="titulo-obs">
-        <h2 id="titulo-obs" className="mb-3 text-xl font-semibold">Observações da escola</h2>
+        <h2 id="titulo-obs" className="mb-3 text-xl font-semibold">Observações da escola e do professor</h2>
         {!observacoes.length ? (
           <Vazio>Nenhuma observação compartilhada ainda.</Vazio>
         ) : (
@@ -88,6 +92,13 @@ export function HistoricoFamilia({ id, professorNome, relatorios: rels, atividad
           </ul>
         )}
       </section>
+
+      {registrosEspecialistas.length > 0 && (
+        <section aria-labelledby="titulo-esp">
+          <h2 id="titulo-esp" className="mb-3 text-xl font-semibold">Orientações dos especialistas</h2>
+          <RegistrosEspecialistas registros={registrosEspecialistas} />
+        </section>
+      )}
     </div>
   );
 }

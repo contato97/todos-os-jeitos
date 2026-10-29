@@ -15,7 +15,7 @@ export async function MinhaConta() {
   if (!usuario) return null;
   const supabase = await criarClienteServidor();
 
-  const [{ data: claims }, foto, { data: professor }, { data: escola }] =
+  const [{ data: claims }, foto, { data: professor }, { data: escola }, { data: especialista }, { data: whatsapp }] =
     await Promise.all([
       supabase.auth.getClaims(),
       urlDaFoto(usuario.foto),
@@ -33,6 +33,15 @@ export async function MinhaConta() {
             .eq("responsavel_id", usuario.id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
+      usuario.tipo === "especialista"
+        ? supabase
+            .from("especialistas")
+            .select("profissao, registro, clinica, local, atuacao")
+            .eq("id", usuario.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      // O telefone so e lido pelo proprio dono (ver migration whatsapp_privado)
+      supabase.rpc("meu_whatsapp"),
     ]);
   const email = (claims?.claims?.email as string | undefined) ?? "";
 
@@ -52,11 +61,17 @@ export async function MinhaConta() {
               dados={{
                 tipo: usuario.tipo,
                 nome: usuario.nome,
+                whatsapp,
                 escola: professor?.escola_nome ?? escola?.nome,
                 rede: professor?.rede,
                 etapas: professor?.etapas,
                 atuacao: professor?.atuacao,
                 cargo: escola?.cargo_responsavel,
+                profissao: especialista?.profissao,
+                registro: especialista?.registro,
+                clinica: especialista?.clinica,
+                local: especialista?.local,
+                atuacaoEspecialista: especialista?.atuacao,
               }}
             />
           </Cartao>

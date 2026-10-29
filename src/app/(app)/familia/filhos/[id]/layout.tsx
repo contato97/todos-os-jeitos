@@ -34,6 +34,7 @@ async function CabecalhoFilho({ params }: { params: Promise<{ id: string }> }) {
           itens={[
             { href: base, rotulo: "Histórico", exato: true },
             { href: `${base}/observacoes`, rotulo: "Observações" },
+            { href: `${base}/casa`, rotulo: "Como é em casa" },
             { href: `${base}/reforco`, rotulo: "Reforço e lição de casa" },
           ]}
         />

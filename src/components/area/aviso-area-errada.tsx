@@ -7,6 +7,7 @@ const NOMES: Record<string, string> = {
   "area-de-escola": "da escola",
   "area-de-professor": "do professor",
   "area-de-familia": "da família",
+  "area-de-especialista": "do especialista",
 };
 
 // Quem tenta abrir a area de outro perfil volta para a propria area.

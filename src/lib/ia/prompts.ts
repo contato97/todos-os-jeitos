@@ -15,7 +15,8 @@ export type PerfilAluno = {
 };
 
 // O perfil enviado a IA: SEM nome e SEM informacoes de saude (minimizacao de dados, LGPD)
-export function descreverPerfil(p: PerfilAluno) {
+// "casa": linhas de casaParaIA (relato da familia, sem saude)
+export function descreverPerfil(p: PerfilAluno, casa: string[] = []) {
   const idade = p.data_nascimento
     ? Math.floor((Date.now() - new Date(p.data_nascimento).getTime()) / (365.25 * 24 * 3600 * 1000))
     : null;
@@ -28,6 +29,7 @@ export function descreverPerfil(p: PerfilAluno) {
     p.o_que_trava && `O que trava: ${p.o_que_trava}`,
     p.comunicacao && `Como prefere receber instruções: ${p.comunicacao}`,
     p.sensorial && `Sensibilidades sensoriais: ${p.sensorial}`,
+    ...casa,
   ].filter(Boolean);
   return linhas.length ? linhas.join("\n") : "Perfil ainda pouco preenchido.";
 }
@@ -57,7 +59,7 @@ Formato da resposta (importante, porque o professor vai imprimir ou baixar a par
 export const SISTEMA_RELATORIO = `${REGRAS_GERAIS}
 
 Sua tarefa: escrever um relatório de acompanhamento a partir do perfil e das observações de um período, em duas versões:
-- "versao_familia": linguagem acolhedora e simples para a família, começando pelos avanços e pontos fortes, com sugestões práticas de apoio em casa. Sem jargão técnico.
+- "versao_familia": linguagem acolhedora e simples para a família, começando pelos avanços e pontos fortes. Sem jargão técnico. Termine com uma seção que começa exatamente com a linha "## Como apoiar em casa", com EXATAMENTE 5 dicas numeradas, curtas e práticas, ligadas ao perfil do aluno e ao que foi observado na sala de aula no período (o que funcionou, o que está aprendendo, o que trava). Cada dica diz o que fazer e com o quê, usando coisas simples de casa.
 - "versao_tecnica": linguagem técnica e objetiva para especialistas (psicopedagogos, terapeutas), descrevendo comportamentos observados, estratégias que funcionaram, desafios e encaminhamentos pedagógicos sugeridos.
 Use apenas o que está nas observações e no perfil: não invente fatos. Se houver poucas observações, diga isso com naturalidade.`;
 

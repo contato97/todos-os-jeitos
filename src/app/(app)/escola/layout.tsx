@@ -14,6 +14,7 @@ export default function LayoutEscola({ children }: LayoutProps<"/escola">) {
               { href: "/escola", rotulo: "Visão geral", icone: "painel", exato: true },
               { href: "/escola/professores", rotulo: "Professores", icone: "professores", destaque: true },
               { href: "/escola/alunos", rotulo: "Alunos", icone: "alunos" },
+              { href: "/escola/especialistas", rotulo: "Especialistas", icone: "especialistas" },
             ],
             [
               { href: "/escola/ajuda", rotulo: "Central de ajuda", icone: "ajuda" },

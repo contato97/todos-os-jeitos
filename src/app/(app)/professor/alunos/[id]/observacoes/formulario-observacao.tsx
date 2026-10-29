@@ -21,7 +21,11 @@ export function FormularioObservacao({ alunoId, hoje }: { alunoId: string; hoje:
       />
       <div className="grid items-end gap-4 sm:grid-cols-2">
         <Campo rotulo="Data" name="data_observacao" type="date" defaultValue={hoje} max={hoje} />
-        <CaixaMarcar rotulo="Compartilhar com a família" name="visivel_familia" />
+        <CaixaMarcar
+          rotulo="Compartilhar com a família"
+          name="visivel_familia"
+          dica="Para a família, prefira um olhar pedagógico: evolução nos conteúdos, na socialização e no ambiente escolar."
+        />
       </div>
       <div>
         <BotaoEnviar enviando="Registrando...">Registrar observação</BotaoEnviar>

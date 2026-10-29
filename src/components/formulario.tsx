@@ -164,3 +164,20 @@ export function Aviso({ tipo, children }: { tipo: "erro" | "sucesso"; children: 
     </p>
   );
 }
+
+// Campo de WhatsApp: teclado numerico no celular e um exemplo do formato
+export function CampoWhatsapp({ defaultValue, required = true }: { defaultValue?: string; required?: boolean }) {
+  return (
+    <Campo
+      rotulo="WhatsApp"
+      name="whatsapp"
+      type="tel"
+      inputMode="tel"
+      autoComplete="tel-national"
+      placeholder="(11) 91234-5678"
+      required={required}
+      defaultValue={defaultValue}
+      dica="Com DDD. Usamos só para falar com você sobre a plataforma."
+    />
+  );
+}
