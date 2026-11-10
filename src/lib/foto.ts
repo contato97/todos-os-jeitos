@@ -8,3 +8,9 @@ export async function urlDaFoto(caminho: string | null | undefined) {
   const { data } = await supabase.storage.from("fotos").createSignedUrl(caminho, 3600);
   return data?.signedUrl ?? null;
 }
+
+// Logo da escola: bucket publico (logo nao e dado sensivel), entao o link e fixo
+export function urlDoLogo(caminho: string | null | undefined) {
+  if (!caminho) return null;
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/logos/${caminho}`;
+}

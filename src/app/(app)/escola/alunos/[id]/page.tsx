@@ -87,6 +87,11 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
 
           <Cartao>
             <h2 className="text-xl font-semibold">Relatórios revisados</h2>
+            {!!relatorios?.length && (
+              <Link href={`/imprimir/linha-do-tempo/${id}`} target="_blank" className="mt-1 inline-block underline underline-offset-4">
+                Linha do tempo (todos em ordem)
+              </Link>
+            )}
             {!relatorios?.length ? (
               <p className="mt-2">Nenhum ainda.</p>
             ) : (

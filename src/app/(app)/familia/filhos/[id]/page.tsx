@@ -18,7 +18,14 @@ export default function Historico({ params }: PageProps<"/familia/filhos/[id]">)
   );
 }
 
-type RelatorioFamilia = { id: string; periodo_inicio: string; periodo_fim: string; versao_familia: string | null };
+type RelatorioFamilia = {
+  id: string;
+  periodo_inicio: string;
+  periodo_fim: string;
+  versao_familia: string | null;
+  bimestre: number | null;
+  ano_letivo: number | null;
+};
 
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -26,7 +33,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const [{ data: observacoes }, { data: atividades }, { data: relatorios }, { data: aluno }, registrosEsp] = await Promise.all([
     supabase
       .from("observacoes")
-      .select("id, texto, data_observacao")
+      .select("id, texto, data_observacao, materia")
       .eq("aluno_id", id)
       .eq("origem", "escola")
       .order("data_observacao", { ascending: false })

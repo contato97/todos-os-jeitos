@@ -445,5 +445,33 @@ await deveFalhar("professor NAO le o resumo de custos da equipe", profA, `select
 confere("resumo de custos soma certo (equipe)",
   Number((await db.query(`select custo_total_usd from privado.ia_custo_mensal`)).rows[0]?.custo_total_usd) === 0.25);
 
+
+// ---------- Relatorio por bimestre, materia e logo ----------
+console.log("\nRelatorio por bimestre");
+await comoUsuario(profA, `update professores set logo = $1 where id = $2`, [`${profA.id}/logo.png`, profA.id]);
+const [cab] = await comoUsuario(mae, `select * from cabecalho_do_aluno($1)`, [aluno.id]);
+confere("familia ve o logo e o nome da escola", cab?.logo === `${profA.id}/logo.png` && cab?.escola === "Escola X", JSON.stringify(cab));
+await comoUsuario(escola, `update escolas set logo = $1 where responsavel_id = $2`, [`${escola.id}/logo.png`, escola.id]);
+const [cab2] = await comoUsuario(mae, `select * from cabecalho_do_aluno($1)`, [aluno.id]);
+confere("logo da escola vinculada tem prioridade", cab2?.logo === `${escola.id}/logo.png`);
+confere("professor B NAO ve o cabecalho de aluno alheio", (await comoUsuario(profB, `select * from cabecalho_do_aluno($1)`, [aluno.id])).length === 0);
+await deveFalhar("visitante NAO chama cabecalho_do_aluno", null, `select * from cabecalho_do_aluno($1)`, [aluno.id]);
+confere("professor NAO troca o logo da escola",
+  (await comoUsuario(profA, `update escolas set logo = 'x' returning id`).catch(() => [])).length === 0);
+await comoUsuario(profA, `insert into storage.objects (bucket_id, name) values ('logos', $1)`, [`${profA.id}/logo.png`]);
+confere("professor envia logo para a propria pasta", true);
+await deveFalhar("professor NAO envia logo na pasta de outro", profA,
+  `insert into storage.objects (bucket_id, name) values ('logos', $1)`, [`${profB.id}/logo.png`]);
+
+const [relB] = await comoUsuario(profA,
+  `insert into relatorios (aluno_id, periodo_inicio, periodo_fim, versao_familia, versao_tecnica, status, compartilhado_com_familia, bimestre, ano_letivo)
+   values ($1, '2026-02-01', '2026-04-30', 'fam', 'tec', 'revisado', true, 1, 2026) returning id`, [aluno.id]);
+const relsFam = await comoUsuario(mae, `select * from relatorios_para_familia($1)`, [aluno.id]);
+confere("familia recebe bimestre e ano letivo", relsFam.some((r) => r.id === relB.id && r.bimestre === 1 && r.ano_letivo === 2026));
+confere("familia continua sem a versao tecnica", relsFam.every((r) => !("versao_tecnica" in r)));
+await deveFalhar("bimestre 5 e recusado", profA, `update relatorios set bimestre = 5 where id = $1`, [relB.id]);
+confere("professor marca a materia da observacao",
+  (await comoUsuario(profA, `insert into observacoes (aluno_id, origem, texto, materia) values ($1, 'escola', 'somou ate 20', 'Matemática') returning id`, [aluno.id])).length === 1);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

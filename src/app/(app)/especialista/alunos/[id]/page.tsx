@@ -86,6 +86,15 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
             <h2 id="titulo-rel" className="mb-3 text-xl font-semibold">
               Relatórios da escola
             </h2>
+            {vinculo.ver_relatorios && !!relatorios?.length && (
+              <Link
+                href={`/imprimir/linha-do-tempo/${id}?versao=tecnica`}
+                target="_blank"
+                className="mb-3 inline-block underline underline-offset-4"
+              >
+                Linha do tempo (versão técnica, todos em ordem)
+              </Link>
+            )}
             {!vinculo.ver_relatorios ? (
               <Vazio>A escola ainda não liberou os relatórios deste aluno para você.</Vazio>
             ) : !relatorios?.length ? (

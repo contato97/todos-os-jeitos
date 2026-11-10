@@ -12,7 +12,7 @@ import { casaParaIA } from "@/lib/ia/casa";
 import { creditosPorPaginas, paginasDeTexto } from "@/lib/ia/precos";
 import { SCHEMA_RELATORIO, SISTEMA_ADAPTAR, SISTEMA_RELATORIO, descreverPerfil } from "@/lib/ia/prompts";
 import { lerCampo, type EstadoFormulario } from "@/lib/formulario";
-import { PRIORIDADES_ADAPTACAO } from "@/lib/opcoes-cadastro";
+import { AREAS_OBSERVACAO, PRIORIDADES_ADAPTACAO, rotuloBimestre } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
 const CAMPOS_PERFIL = [
@@ -122,6 +122,8 @@ export async function registrarObservacao(
   const texto = lerCampo(formData, "texto");
   const data = lerCampo(formData, "data_observacao");
   const visivel = formData.get("visivel_familia") === "on";
+  const materiaEscolhida = lerCampo(formData, "materia");
+  const materia = (AREAS_OBSERVACAO as readonly string[]).includes(materiaEscolhida) ? materiaEscolhida : null;
   if (!texto) return { erro: "Escreva a observação." };
 
   const supabase = await criarClienteServidor();
@@ -130,9 +132,10 @@ export async function registrarObservacao(
     origem: "escola",
     texto,
     visivel_familia: visivel,
+    materia,
     ...(data ? { data_observacao: data } : {}),
   });
-  if (error) return { erro: "Não foi possível registrar a observação.", valores: { texto } };
+  if (error) return { erro: "Não foi possível registrar a observação.", valores: { texto, materia: materia ?? "" } };
   refresh();
   return { sucesso: "Observação registrada." };
 }
@@ -317,7 +320,12 @@ export async function gerarRelatorio(
 ): Promise<EstadoFormulario> {
   const inicio = lerCampo(formData, "inicio");
   const fim = lerCampo(formData, "fim");
-  const valores = { inicio, fim };
+  // Bimestre e ano letivo sao opcionais: organizam a linha do tempo da familia
+  const bimestreLido = Number(lerCampo(formData, "bimestre"));
+  const bimestre = bimestreLido >= 1 && bimestreLido <= 4 ? bimestreLido : null;
+  const anoLido = Number(lerCampo(formData, "ano_letivo"));
+  const anoLetivo = anoLido >= 2020 && anoLido <= 2100 ? anoLido : null;
+  const valores = { inicio, fim, bimestre: bimestre ? String(bimestre) : "", ano_letivo: anoLetivo ? String(anoLetivo) : "" };
   if (!inicio || !fim || fim < inicio) return { erro: "Escolha um período válido.", valores };
 
   const supabase = await criarClienteServidor();
@@ -325,7 +333,7 @@ export async function gerarRelatorio(
     supabase.from("alunos").select("*").eq("id", alunoId).maybeSingle(),
     supabase
       .from("observacoes")
-      .select("texto, data_observacao, origem")
+      .select("texto, data_observacao, origem, materia")
       .eq("aluno_id", alunoId)
       .gte("data_observacao", inicio)
       .lte("data_observacao", fim)
@@ -335,7 +343,9 @@ export async function gerarRelatorio(
   const casa = await casaParaIA(supabase, alunoId);
 
   const listaObs = observacoes?.length
-    ? observacoes.map((o) => `- ${o.data_observacao} (${o.origem === "casa" ? "relato da família" : "escola"}): ${o.texto}`).join("\n")
+    ? observacoes
+        .map((o) => `- ${o.data_observacao} (${o.origem === "casa" ? "relato da família" : "escola"}${o.materia ? `, ${o.materia}` : ""}): ${o.texto}`)
+        .join("\n")
     : "Nenhuma observação registrada neste período.";
 
   let resultado: { versao_familia: string; versao_tecnica: string };
@@ -347,7 +357,7 @@ export async function gerarRelatorio(
       conteudo: [
         {
           type: "text",
-          text: `Período: ${inicio} a ${fim}\n\nPerfil do aluno:\n${descreverPerfil(aluno, casa)}\n\nObservações do período:\n${listaObs}`,
+          text: `Período: ${inicio} a ${fim}${bimestre ? ` (${rotuloBimestre(bimestre, anoLetivo)})` : ""}\n\nPerfil do aluno:\n${descreverPerfil(aluno, casa)}\n\nObservações do período:\n${listaObs}`,
         },
       ],
     });
@@ -362,6 +372,8 @@ export async function gerarRelatorio(
       aluno_id: alunoId,
       periodo_inicio: inicio,
       periodo_fim: fim,
+      bimestre,
+      ano_letivo: anoLetivo,
       versao_familia: resultado.versao_familia,
       versao_tecnica: resultado.versao_tecnica,
     })

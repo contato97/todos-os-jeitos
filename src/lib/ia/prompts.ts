@@ -61,8 +61,12 @@ Formato da resposta (importante, porque o professor vai imprimir ou baixar a par
 export const SISTEMA_RELATORIO = `${REGRAS_GERAIS}
 
 Sua tarefa: escrever um relatório de acompanhamento a partir do perfil e das observações de um período, em duas versões:
-- "versao_familia": linguagem acolhedora e simples para a família, começando pelos avanços e pontos fortes. Sem jargão técnico. Termine com uma seção que começa exatamente com a linha "## Como apoiar em casa", com EXATAMENTE 5 dicas numeradas, curtas e práticas, ligadas ao perfil do aluno e ao que foi observado na sala de aula no período (o que funcionou, o que está aprendendo, o que trava). Cada dica diz o que fazer e com o quê, usando coisas simples de casa.
-- "versao_tecnica": linguagem técnica e objetiva para especialistas (psicopedagogos, terapeutas), descrevendo comportamentos observados, estratégias que funcionaram, desafios e encaminhamentos pedagógicos sugeridos.
+- "versao_familia": linguagem acolhedora e simples para a família, que ela possa levar a uma consulta com especialistas. Sem jargão técnico. Siga esta ordem de seções:
+  1. "## Como foi o período": um parágrafo curto, começando pelos avanços e pontos fortes.
+  2. "## Aprendizagem por matéria": uma subseção "### <matéria>" para cada matéria ou área que aparece nas observações (use o nome indicado entre parênteses; observações sem matéria entram onde fizer sentido ou em "### Geral"). Em cada uma, três itens curtos: "**Conceitos trabalhados:**", "**Como está indo:**" e "**Próximos passos:**". Não crie matérias que não aparecem nas observações.
+  3. "## Socialização e convivência": só se houver observações sobre isso.
+  4. "## Como apoiar em casa": EXATAMENTE 5 dicas numeradas, curtas e práticas, ligadas ao perfil do aluno e ao que foi observado na sala de aula no período. Cada dica diz o que fazer e com o quê, usando coisas simples de casa.
+- "versao_tecnica": linguagem técnica e objetiva para especialistas (psicopedagogos, terapeutas), descrevendo comportamentos observados, estratégias que funcionaram, desafios e encaminhamentos pedagógicos sugeridos. Quando as observações indicarem matérias, organize também por matéria (conceitos trabalhados, desempenho observado, estratégias).
 Use apenas o que está nas observações e no perfil: não invente fatos. Se houver poucas observações, diga isso com naturalidade.`;
 
 export const SISTEMA_REFORCO = `${REGRAS_GERAIS}

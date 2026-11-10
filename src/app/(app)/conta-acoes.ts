@@ -117,6 +117,66 @@ export async function removerFoto() {
   refresh();
 }
 
+// Logo da escola, que aparece no topo dos relatorios impressos.
+// A escola guarda na propria ficha; o professor guarda na dele (vale quando
+// ele nao esta vinculado a uma escola que ja enviou o logo).
+async function linhaDoLogo(supabase: Awaited<ReturnType<typeof criarClienteServidor>>, usuarioId: string, tipo: string) {
+  if (tipo === "escola") {
+    const { data } = await supabase.from("escolas").select("id, logo").eq("responsavel_id", usuarioId).maybeSingle();
+    return data ? { tabela: "escolas" as const, id: data.id as string, logo: data.logo as string | null } : null;
+  }
+  if (tipo === "professor") {
+    const { data } = await supabase.from("professores").select("id, logo").eq("id", usuarioId).maybeSingle();
+    return data ? { tabela: "professores" as const, id: data.id as string, logo: data.logo as string | null } : null;
+  }
+  return null;
+}
+
+export async function enviarLogo(_: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
+  const usuario = await buscarUsuario();
+  if (!usuario) return { erro: "Sessão expirada. Entre de novo." };
+  const arquivo = formData.get("logo");
+  if (!(arquivo instanceof File) || arquivo.size === 0) return { erro: "Escolha a imagem do logo." };
+  if (!arquivo.type.startsWith("image/") || arquivo.size > FOTO_MAXIMA) {
+    return { erro: "Envie uma imagem (PNG, JPG ou WEBP) de até 4 MB." };
+  }
+
+  // PNG mantem o fundo transparente; no maximo 600 x 240 px, sem metadados
+  let imagem: Buffer;
+  try {
+    imagem = await sharp(Buffer.from(await arquivo.arrayBuffer()))
+      .resize(600, 240, { fit: "inside", withoutEnlargement: true })
+      .png()
+      .toBuffer();
+  } catch {
+    return { erro: "Não conseguimos ler esta imagem. Tente outro arquivo." };
+  }
+
+  const supabase = await criarClienteServidor();
+  const linha = await linhaDoLogo(supabase, usuario.id, usuario.tipo);
+  if (!linha) return { erro: "Só escolas e professores enviam o logo." };
+
+  const caminho = `${usuario.id}/logo-${crypto.randomUUID()}.png`;
+  const { error } = await supabase.storage.from("logos").upload(caminho, imagem, { contentType: "image/png" });
+  if (error) return { erro: "Não foi possível enviar o logo." };
+
+  await supabase.from(linha.tabela).update({ logo: caminho }).eq("id", linha.id);
+  if (linha.logo) await supabase.storage.from("logos").remove([linha.logo]);
+  refresh();
+  return { sucesso: "Logo atualizado. Ele já aparece nos relatórios impressos." };
+}
+
+export async function removerLogo() {
+  const usuario = await buscarUsuario();
+  if (!usuario) return;
+  const supabase = await criarClienteServidor();
+  const linha = await linhaDoLogo(supabase, usuario.id, usuario.tipo);
+  if (!linha?.logo) return;
+  await supabase.from(linha.tabela).update({ logo: null }).eq("id", linha.id);
+  await supabase.storage.from("logos").remove([linha.logo]);
+  refresh();
+}
+
 export async function alterarSenha(_: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
   const ler = (n: string) => (typeof formData.get(n) === "string" ? (formData.get(n) as string) : "");
   const atual = ler("atual");

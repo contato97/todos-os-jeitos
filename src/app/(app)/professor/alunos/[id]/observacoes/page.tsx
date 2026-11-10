@@ -26,7 +26,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const usuario = await buscarUsuario();
   const { data: observacoes } = await supabase
     .from("observacoes")
-    .select("id, texto, data_observacao, origem, visivel_familia, autor_id, perfis(nome)")
+    .select("id, texto, data_observacao, origem, visivel_familia, autor_id, materia, perfis(nome)")
     .eq("aluno_id", id)
     .order("data_observacao", { ascending: false })
     .order("created_at", { ascending: false });
@@ -54,6 +54,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
                   <Cartao>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{formatarData(o.data_observacao)}</span>
+                      {o.materia && <Etiqueta>{o.materia}</Etiqueta>}
                       {o.origem === "casa" ? (
                         <Etiqueta tipo="casa">De casa{autor?.nome ? ` · ${autor.nome}` : ""}</Etiqueta>
                       ) : o.visivel_familia ? (

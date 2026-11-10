@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
+import { BOTAO, Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
 import { versaoDoAluno } from "@/lib/atividade-texto";
+import { rotuloBimestre } from "@/lib/opcoes-cadastro";
 import { RegistrosEspecialistas, type RegistroEspecialista } from "@/components/area/registros-especialistas";
 
 // Parte visual do historico do filho. Fica separada da busca de dados para ser
@@ -8,49 +9,93 @@ import { RegistrosEspecialistas, type RegistroEspecialista } from "@/components/
 export type DadosHistorico = {
   id: string; // id do aluno
   professorNome?: string | null;
-  relatorios: { id: string; periodo_inicio: string; periodo_fim: string; versao_familia: string | null }[];
+  relatorios: {
+    id: string;
+    periodo_inicio: string;
+    periodo_fim: string;
+    versao_familia: string | null;
+    bimestre?: number | null;
+    ano_letivo?: number | null;
+  }[];
   atividades: { id: string; titulo: string; conteudo_adaptado: string | null; dicas_familia?: string | null }[];
-  observacoes: { id: string; texto: string; data_observacao: string }[];
+  observacoes: { id: string; texto: string; data_observacao: string; materia?: string | null }[];
   registrosEspecialistas?: RegistroEspecialista[];
   abertos?: boolean; // vitrine: mostra os itens ja expandidos
 };
 
-export function HistoricoFamilia({ id, professorNome, relatorios: rels, atividades, observacoes, registrosEspecialistas = [], abertos }: DadosHistorico) {
+export function HistoricoFamilia({
+  id,
+  professorNome,
+  relatorios: rels,
+  atividades,
+  observacoes,
+  registrosEspecialistas = [],
+  abertos,
+}: DadosHistorico) {
   return (
     <div className="space-y-8">
-      {professorNome && <p>Professor(a): <strong>{professorNome}</strong></p>}
+      {professorNome && (
+        <p>
+          Professor(a): <strong>{professorNome}</strong>
+        </p>
+      )}
 
       <section aria-labelledby="titulo-rel">
-        <h2 id="titulo-rel" className="mb-3 text-xl font-semibold">Relatórios</h2>
+        <h2 id="titulo-rel" className="mb-3 text-xl font-semibold">
+          Relatórios
+        </h2>
         {rels.length === 0 ? (
           <Vazio>Quando o professor compartilhar um relatório, ele aparece aqui.</Vazio>
         ) : (
-          <ul className="space-y-3">
-            {rels.map((r) => (
-              <li key={r.id}>
-                <Cartao>
-                  <details open={abertos}>
-                    <summary className="cursor-pointer text-lg font-semibold">
-                      {formatarData(r.periodo_inicio)} a {formatarData(r.periodo_fim)}
-                    </summary>
-                    <div className="mt-3">
-                      <TextoFormatado texto={r.versao_familia ?? ""} />
-                      <Link href={`/imprimir/relatorio/${r.id}?versao=familia&aluno=${id}`} target="_blank" className="mt-4 inline-block underline underline-offset-4">
-                        Baixar PDF
-                      </Link>
-                    </div>
-                  </details>
-                </Cartao>
-              </li>
-            ))}
-          </ul>
+          <>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-petroleo/10 p-4">
+              <p className="min-w-0 flex-1">
+                <strong>Linha do tempo:</strong> todos os relatórios em ordem, num documento só, para imprimir ou levar
+                a uma consulta.
+              </p>
+              <Link href={`/imprimir/linha-do-tempo/${id}`} target="_blank" className={BOTAO}>
+                Baixar linha do tempo
+              </Link>
+            </div>
+            <ul className="space-y-3">
+              {rels.map((r) => (
+                <li key={r.id}>
+                  <Cartao>
+                    <details open={abertos}>
+                      <summary className="cursor-pointer text-lg font-semibold">
+                        {rotuloBimestre(r.bimestre, r.ano_letivo)
+                          ? `${rotuloBimestre(r.bimestre, r.ano_letivo)} · `
+                          : ""}
+                        {formatarData(r.periodo_inicio)} a {formatarData(r.periodo_fim)}
+                      </summary>
+                      <div className="mt-3">
+                        <TextoFormatado texto={r.versao_familia ?? ""} />
+                        <Link
+                          href={`/imprimir/relatorio/${r.id}?versao=familia&aluno=${id}`}
+                          target="_blank"
+                          className="mt-4 inline-block underline underline-offset-4"
+                        >
+                          Baixar PDF
+                        </Link>
+                      </div>
+                    </details>
+                  </Cartao>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </section>
 
       <section aria-labelledby="titulo-ativ">
-        <h2 id="titulo-ativ" className="mb-3 text-xl font-semibold">Atividades adaptadas</h2>
+        <h2 id="titulo-ativ" className="mb-3 text-xl font-semibold">
+          Atividades adaptadas
+        </h2>
         {!atividades.length ? (
-          <Vazio>As atividades que o professor compartilhar aparecem aqui, na versão usada com o aluno, para você acompanhar o que está sendo feito em sala.</Vazio>
+          <Vazio>
+            As atividades que o professor compartilhar aparecem aqui, na versão usada com o aluno, para você acompanhar
+            o que está sendo feito em sala.
+          </Vazio>
         ) : (
           <ul className="space-y-3">
             {atividades.map((a) => (
@@ -76,7 +121,9 @@ export function HistoricoFamilia({ id, professorNome, relatorios: rels, atividad
       </section>
 
       <section aria-labelledby="titulo-obs">
-        <h2 id="titulo-obs" className="mb-3 text-xl font-semibold">Observações da escola e do professor</h2>
+        <h2 id="titulo-obs" className="mb-3 text-xl font-semibold">
+          Observações da escola e do professor
+        </h2>
         {!observacoes.length ? (
           <Vazio>Nenhuma observação compartilhada ainda.</Vazio>
         ) : (
@@ -84,7 +131,10 @@ export function HistoricoFamilia({ id, professorNome, relatorios: rels, atividad
             {observacoes.map((o) => (
               <li key={o.id}>
                 <Cartao>
-                  <Etiqueta>{formatarData(o.data_observacao)}</Etiqueta>
+                  <div className="flex flex-wrap gap-2">
+                    <Etiqueta>{formatarData(o.data_observacao)}</Etiqueta>
+                    {o.materia && <Etiqueta>{o.materia}</Etiqueta>}
+                  </div>
                   <p className="mt-2 whitespace-pre-line">{o.texto}</p>
                 </Cartao>
               </li>
@@ -95,7 +145,9 @@ export function HistoricoFamilia({ id, professorNome, relatorios: rels, atividad
 
       {registrosEspecialistas.length > 0 && (
         <section aria-labelledby="titulo-esp">
-          <h2 id="titulo-esp" className="mb-3 text-xl font-semibold">Orientações dos especialistas</h2>
+          <h2 id="titulo-esp" className="mb-3 text-xl font-semibold">
+            Orientações dos especialistas
+          </h2>
           <RegistrosEspecialistas registros={registrosEspecialistas} />
         </section>
       )}

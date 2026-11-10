@@ -114,7 +114,12 @@ export const AJUDA_PROFESSOR = {
       {
         pergunta: "Como o relatório é feito?",
         resposta:
-          "Você escolhe o período e a IA prepara um rascunho a partir das observações e do perfil, em duas versões: uma acolhedora, para a família, e uma técnica, para especialistas.",
+          "Você escolhe o bimestre e o período, e a IA prepara um rascunho a partir das observações e do perfil, em duas versões: uma acolhedora, para a família, organizada por matéria e com 5 dicas para casa, e uma técnica, para especialistas. Marcar a matéria nas observações deixa o relatório mais completo.",
+      },
+      {
+        pergunta: "O que é a linha do tempo?",
+        resposta:
+          "Um documento só com todos os relatórios revisados, em ordem de bimestre, com o logo da escola no topo. A família pode imprimir e levar às consultas. O logo é enviado em Minha conta.",
       },
       {
         pergunta: "A IA pode sugerir um diagnóstico?",
@@ -253,6 +258,7 @@ export const AJUDA_FAMILIA = {
         resposta:
           "O professor escolhe o que compartilhar. Anotações rápidas do dia a dia da sala podem ficar só com ele.",
       },
+      {        pergunta: "Como levo os relatórios a uma consulta?",        resposta:          "Em Relatórios, clique em “Baixar linha do tempo”. Abre um documento com todos os relatórios em ordem de bimestre. Clique em Imprimir ou escolha “Salvar como PDF”.",      },
     ],
   },
   observacoes: {

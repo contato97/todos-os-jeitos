@@ -153,3 +153,17 @@ export const TIPOS_REGISTRO_ESPECIALISTA = [
     descricao: "Medicação, receitas, informações de saúde. Só o professor do aluno e a família veem (a coordenação não).",
   },
 ] as const;
+
+// Matéria ou área de uma observação (opcional). Organiza o relatório por matéria
+// e inclui o que a Juliana pediu além do conteúdo: socialização e autonomia.
+export const AREAS_OBSERVACAO = [
+  ...MATERIAS.filter((m) => m !== "Organização e rotina de estudos"),
+  "Socialização e convivência",
+  "Autonomia e organização",
+  "Educação Física e Artes",
+] as const;
+
+export function rotuloBimestre(bimestre: number | null | undefined, ano?: number | null) {
+  if (!bimestre) return null;
+  return `${bimestre}º bimestre${ano ? ` de ${ano}` : ""}`;
+}

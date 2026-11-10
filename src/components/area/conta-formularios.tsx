@@ -5,7 +5,7 @@ import { Aviso, BotaoEnviar, Campo, CampoSenha, CampoWhatsapp } from "@/componen
 import { formatarWhatsapp } from "@/lib/formulario";
 import { ATUACOES, CARGOS, ETAPAS, PROFISSOES, REDES } from "@/lib/opcoes-cadastro";
 import { reduzirNoCampo } from "@/lib/reduzir-imagem";
-import { alterarEmail, alterarSenha, enviarFoto, removerFoto, salvarDados } from "@/app/(app)/conta-acoes";
+import { alterarEmail, alterarSenha, enviarFoto, enviarLogo, removerFoto, removerLogo, salvarDados } from "@/app/(app)/conta-acoes";
 
 const SENHA_MINIMA = 8;
 const OPCAO = "flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-marca/15 p-3 has-checked:border-petroleo has-checked:bg-petroleo/5";
@@ -223,5 +223,56 @@ export function FormularioEmail({ emailAtual }: { emailAtual: string }) {
         <BotaoEnviar enviando="Enviando...">Trocar e-mail</BotaoEnviar>
       </div>
     </form>
+  );
+}
+
+export function FormularioLogo({ urlAtual, tipo }: { urlAtual: string | null; tipo: "professor" | "escola" }) {
+  const [estado, acao] = useActionState(enviarLogo, {});
+  const [previa, setPrevia] = useState<string | null>(null);
+  const mostrar = previa ?? urlAtual;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p>
+        {tipo === "escola"
+          ? "O logo aparece no topo dos relatórios impressos de todos os alunos da escola."
+          : "Se a sua escola não usa a plataforma, envie o logo dela aqui. Ele aparece no topo dos relatórios impressos dos seus alunos."}
+      </p>
+      {mostrar ? (
+        // eslint-disable-next-line @next/next/no-img-element -- previa local (blob:) ou imagem do bucket de logos
+        <img src={mostrar} alt="Logo atual da escola" className="h-16 w-auto max-w-full self-start rounded-lg bg-white object-contain p-2 ring-1 ring-marca/10" />
+      ) : (
+        <p className="rounded-xl border-2 border-dashed border-marca/20 p-4 text-base">Nenhum logo enviado.</p>
+      )}
+      {estado.erro && <Aviso tipo="erro">{estado.erro}</Aviso>}
+      {estado.sucesso && <Aviso tipo="sucesso">{estado.sucesso}</Aviso>}
+      <form action={acao} className="flex flex-col gap-3">
+        <label htmlFor="logo" className="font-medium">
+          Escolher imagem do logo
+        </label>
+        <input
+          id="logo"
+          name="logo"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={async (e) => {
+            const arquivo = await reduzirNoCampo(e.currentTarget);
+            setPrevia(arquivo ? URL.createObjectURL(arquivo) : null);
+          }}
+          className="w-full min-w-0 rounded-xl border-2 border-dashed border-marca/25 bg-white p-3 text-base file:mr-3 file:rounded-full file:border-0 file:bg-marca/10 file:px-4 file:py-2 file:font-medium"
+        />
+        <p className="text-base">De preferência PNG com fundo transparente.</p>
+        <div>
+          <BotaoEnviar enviando="Enviando...">Salvar logo</BotaoEnviar>
+        </div>
+      </form>
+      {urlAtual && !previa && (
+        <form action={removerLogo}>
+          <button type="submit" className="text-base underline underline-offset-4">
+            Remover logo
+          </button>
+        </form>
+      )}
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { ComoUsar } from "@/components/area/como-usar";
 import { Carregando } from "@/components/area/em-breve";
 import { Cartao, Etiqueta, Vazio, formatarData } from "@/components/ui";
 import { AJUDA_PROFESSOR } from "@/lib/ajuda";
+import { rotuloBimestre } from "@/lib/opcoes-cadastro";
 import { diasAtras, hoje } from "@/lib/datas";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { FormularioNovoRelatorio } from "./formulario-novo-relatorio";
@@ -24,7 +25,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await criarClienteServidor();
   const { data: relatorios } = await supabase
     .from("relatorios")
-    .select("id, periodo_inicio, periodo_fim, status, compartilhado_com_familia, created_at")
+    .select("id, periodo_inicio, periodo_fim, bimestre, ano_letivo, status, compartilhado_com_familia, created_at")
     .eq("aluno_id", id)
     .order("created_at", { ascending: false });
 
@@ -37,13 +38,24 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
       <Cartao className="h-fit lg:col-span-2">
         <h2 className="text-xl font-semibold">Novo relatório</h2>
         <p className="mb-4 mt-1">A IA usa o perfil e as observações do período (da escola e de casa).</p>
-        <FormularioNovoRelatorio alunoId={id} inicio={inicio} fim={fim} />
+        <FormularioNovoRelatorio alunoId={id} inicio={inicio} fim={fim} ano={Number(fim.slice(0, 4))} />
       </Cartao>
 
       <section className="lg:col-span-3" aria-labelledby="titulo-relatorios">
         <h2 id="titulo-relatorios" className="mb-4 text-xl font-semibold">
           Relatórios
         </h2>
+        {relatorios?.some((r) => r.status === "revisado") && (
+          <p className="mb-4 flex flex-wrap gap-x-4 gap-y-1">
+            <span className="font-medium">Linha do tempo (todos os revisados):</span>
+            <Link href={`/imprimir/linha-do-tempo/${id}`} target="_blank" className="underline underline-offset-4">
+              versão da família
+            </Link>
+            <Link href={`/imprimir/linha-do-tempo/${id}?versao=tecnica`} target="_blank" className="underline underline-offset-4">
+              versão técnica
+            </Link>
+          </p>
+        )}
         {!relatorios?.length ? (
           <Vazio>Nenhum relatório ainda.</Vazio>
         ) : (
@@ -53,7 +65,8 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
                 <Link href={`/professor/alunos/${id}/relatorios/${r.id}`} className="block">
                   <Cartao className="hover:ring-petroleo">
                     <p className="text-lg font-semibold">
-                      {formatarData(r.periodo_inicio)} a {formatarData(r.periodo_fim)}
+                      {rotuloBimestre(r.bimestre, r.ano_letivo) ?? "Relatório"} · {formatarData(r.periodo_inicio)} a{" "}
+                      {formatarData(r.periodo_fim)}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {r.status === "rascunho" ? <Etiqueta tipo="rascunho">Rascunho</Etiqueta> : <Etiqueta tipo="revisado">Revisado</Etiqueta>}
