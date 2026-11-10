@@ -221,3 +221,36 @@ export async function assinarEncaminhamento(
   refresh();
   return { sucesso: "Assinado! O professor e a escola já podem ver a sua assinatura." };
 }
+
+// A crianca fez a atividade de reforco na plataforma (com um adulto por perto)
+export async function salvarRealizacao(
+  reforcoId: string,
+  alunoId: string,
+  _: EstadoFormulario,
+  formData: FormData,
+): Promise<EstadoFormulario> {
+  const respostas = formData
+    .getAll("resposta")
+    .map((r) => (typeof r === "string" ? r.trim().slice(0, 500) : ""))
+    .slice(0, 200);
+  const comoFoiLido = lerCampo(formData, "como_foi");
+  const comoFoi = ["facil", "medio", "dificil"].includes(comoFoiLido) ? comoFoiLido : null;
+  const observacao = lerCampo(formData, "observacao").slice(0, 2000) || null;
+  if (!comoFoi) return { erro: "Conte como foi: fácil, médio ou difícil." };
+
+  const supabase = await criarClienteServidor();
+  const dados = { respostas, como_foi: comoFoi, observacao, feita_em: new Date().toISOString() };
+  // Ja fez antes? Atualiza. Senao, cria.
+  const { data: atualizada, error } = await supabase
+    .from("reforco_realizacoes")
+    .update(dados)
+    .eq("reforco_id", reforcoId)
+    .select("id");
+  if (error) return { erro: "Não foi possível salvar. Tente de novo." };
+  if (!atualizada?.length) {
+    const { error: e } = await supabase.from("reforco_realizacoes").insert({ reforco_id: reforcoId, aluno_id: alunoId, ...dados });
+    if (e) return { erro: "Não foi possível salvar. Tente de novo." };
+  }
+  refresh();
+  return { sucesso: "Atividade guardada! O professor também vai ver." };
+}

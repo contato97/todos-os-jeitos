@@ -370,6 +370,11 @@ conversa: {    titulo: "Conversa com o professor",    perguntas: [      {       
           "Não. A IA explica o conteúdo para você e sugere perguntas e passos para guiar a criança, sem dar as respostas. A ideia é apoiar, sem fazer por ele.",
       },
       {
+        pergunta: "Meu filho pode fazer a atividade na tela?",
+        resposta:
+          "Sim. Abaixo do material, clique em “Fazer na plataforma”. Abre uma tela com letra grande, só com a atividade, e cada espaço vira um campo para ele responder. No fim, você conta como foi. Fica guardado, e o professor também vê.",
+      },
+      {
         pergunta: "Meu filho pode usar sozinho?",
         resposta:
           "O reforço é pensado para ser conduzido por um adulto. Esse cuidado faz parte do nosso compromisso de ter sempre uma pessoa por perto.",

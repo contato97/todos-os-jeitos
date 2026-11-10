@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { ComoUsar } from "@/components/area/como-usar";
 import { Carregando } from "@/components/area/em-breve";
 import { BarraExportar } from "@/components/barra-exportar";
-import { Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
+import { BOTAO, Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
+import { materialDaCrianca } from "@/lib/atividade-texto";
 import { AJUDA_FAMILIA } from "@/lib/ajuda";
 import { rotuloTipoReforco } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -44,7 +46,7 @@ function Etiquetas({ p }: { p: Pedido }) {
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await criarClienteServidor();
-  const [{ data: pedidos }, { data: aluno }] = await Promise.all([
+  const [{ data: pedidos }, { data: aluno }, { data: feitas }] = await Promise.all([
     supabase
       .from("reforcos")
       .select("id, tipo, materia, tema, tempo_minutos, pedido, resposta, created_at")
@@ -52,9 +54,11 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
       .order("created_at", { ascending: false })
       .limit(20),
     supabase.from("alunos").select("nome").eq("id", id).maybeSingle(),
+    supabase.from("reforco_realizacoes").select("reforco_id, como_foi, feita_em").eq("aluno_id", id),
   ]);
   const nomeCrianca = aluno?.nome?.split(" ")[0] ?? "a criança";
   const [ultimo, ...anteriores] = (pedidos ?? []) as Pedido[];
+  const feitaDe = new Map((feitas ?? []).map((f) => [f.reforco_id, f]));
 
   return (
     <div className="grid gap-6 xl:grid-cols-5">
@@ -85,6 +89,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
                     <TextoFormatado texto={ultimo.resposta} />
                   </div>
                   <div className="mt-6 max-w-md rounded-2xl bg-creme/60 p-4">
+                    <FazerOuFeita alunoId={id} pedido={ultimo} feita={feitaDe.get(ultimo.id)} />
                     <h4 className="mb-3 font-semibold">Baixar ou copiar</h4>
                     <BarraExportar tipo="reforco" atividadeId={ultimo.id} titulo={ultimo.tema || "Reforço"} texto={ultimo.resposta} />
                   </div>
@@ -109,6 +114,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
                               <TextoFormatado texto={r.resposta} />
                             </div>
                             <div className="mt-5 max-w-md">
+                              <FazerOuFeita alunoId={id} pedido={r} feita={feitaDe.get(r.id)} />
                               <BarraExportar tipo="reforco" atividadeId={r.id} titulo={r.tema || "Reforço"} texto={r.resposta} />
                             </div>
                           </>
@@ -122,6 +128,34 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
           </>
         )}
       </section>
+    </div>
+  );
+}
+
+const ROTULO_COMO_FOI: Record<string, string> = { facil: "😀 Fácil", medio: "🙂 Médio", dificil: "😕 Difícil" };
+
+// "Fazer na plataforma" (se o material tiver a parte da crianca) e, se ja foi feita, quando e como foi
+function FazerOuFeita({
+  alunoId,
+  pedido,
+  feita,
+}: {
+  alunoId: string;
+  pedido: Pedido;
+  feita?: { como_foi: string | null; feita_em: string };
+}) {
+  if (!pedido.resposta || !materialDaCrianca(pedido.resposta)) return null;
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-3">
+      <Link href={`/familia/filhos/${alunoId}/reforco/${pedido.id}/fazer`} className={BOTAO}>
+        {feita ? "Ver ou refazer na plataforma" : "Fazer na plataforma"}
+      </Link>
+      {feita && (
+        <Etiqueta tipo="revisado">
+          Feita em {formatarData(feita.feita_em)}
+          {feita.como_foi ? ` · ${ROTULO_COMO_FOI[feita.como_foi]}` : ""}
+        </Etiqueta>
+      )}
     </div>
   );
 }

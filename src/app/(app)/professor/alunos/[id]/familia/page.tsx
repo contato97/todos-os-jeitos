@@ -24,7 +24,7 @@ export default function Familia({ params }: PageProps<"/professor/alunos/[id]/fa
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await criarClienteServidor();
-  const [{ data: vinculos }, { data: convites }, { data: reforcos }] = await Promise.all([
+  const [{ data: vinculos }, { data: convites }, { data: reforcos }, { data: feitas }] = await Promise.all([
     supabase.from("aluno_familias").select("familia_id, parentesco, consentimento_em, perfis(nome)").eq("aluno_id", id),
     supabase
       .from("convites")
@@ -38,7 +38,9 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
       .eq("aluno_id", id)
       .order("created_at", { ascending: false })
       .limit(10),
+    supabase.from("reforco_realizacoes").select("reforco_id, respostas, como_foi, observacao, feita_em").eq("aluno_id", id),
   ]);
+  const feitaDe = new Map((feitas ?? []).map((f) => [f.reforco_id, f]));
   const agora = agoraIso();
 
   return (
@@ -135,6 +137,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
                         </div>
                       </details>
                     )}
+                    {feitaDe.get(r.id) && <AtividadeFeita feita={feitaDe.get(r.id)!} />}
                   </Cartao>
                 </li>
               ))}
@@ -142,6 +145,36 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
           )}
         </section>
       </div>
+    </div>
+  );
+}
+
+const ROTULO_COMO_FOI: Record<string, string> = { facil: "😀 Fácil", medio: "🙂 Médio", dificil: "😕 Difícil" };
+
+// O que a crianca respondeu ao fazer a atividade de reforco na plataforma
+function AtividadeFeita({
+  feita,
+}: {
+  feita: { respostas: unknown; como_foi: string | null; observacao: string | null; feita_em: string };
+}) {
+  const respostas = Array.isArray(feita.respostas) ? (feita.respostas as string[]) : [];
+  return (
+    <div className="mt-3 rounded-xl bg-salvia/15 p-3">
+      <p className="font-medium">
+        Feita pela criança na plataforma em {formatarData(feita.feita_em)}
+        {feita.como_foi ? ` · ${ROTULO_COMO_FOI[feita.como_foi]}` : ""}
+      </p>
+      {feita.observacao && <p className="mt-1">Família: “{feita.observacao}”</p>}
+      {respostas.some((r) => r) && (
+        <details className="mt-1">
+          <summary className="cursor-pointer underline underline-offset-4">Ver as respostas</summary>
+          <ol className="mt-2 list-decimal pl-6">
+            {respostas.map((r, i) => (
+              <li key={i}>{r || <em>em branco</em>}</li>
+            ))}
+          </ol>
+        </details>
+      )}
     </div>
   );
 }

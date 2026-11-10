@@ -627,5 +627,31 @@ await comoUsuario(profA, `delete from alunos where id = $1`, [alunoX.id]);
 confere("apagar o aluno inteiro apaga tambem o que foi assinado",
   (await db.query(`select 1 from relatorios where id = $1 union all select 1 from encaminhamentos where id = $2`, [relX.id, encX.id])).rows.length === 0);
 
+
+// ---------- Reforco feito na plataforma ----------
+console.log("\nReforco feito na plataforma");
+const [refM] = await comoUsuario(mae,
+  `insert into reforcos (aluno_id, tipo, pedido, resposta) values ($1, 'reforco', 'somas', '## Material para a criança\n2 + 2 = ____') returning id`, [aluno.id]);
+await comoUsuario(mae,
+  `insert into reforco_realizacoes (reforco_id, aluno_id, respostas, como_foi) values ($1, $2, '["4"]', 'facil')`, [refM.id, aluno.id]);
+confere("familia ve a atividade feita", (await comoUsuario(mae, `select * from reforco_realizacoes`)).length === 1);
+confere("professor do aluno ve a atividade feita", (await comoUsuario(profA, `select respostas from reforco_realizacoes`))[0]?.respostas?.[0] === "4");
+confere("professor B NAO ve", (await comoUsuario(profB, `select * from reforco_realizacoes`)).length === 0);
+confere("escola NAO ve", (await comoUsuario(escola, `select * from reforco_realizacoes`)).length === 0);
+confere("familia refaz (atualiza as respostas)",
+  (await comoUsuario(mae, `update reforco_realizacoes set respostas = '["5"]', como_foi = 'medio' where reforco_id = $1 returning id`, [refM.id])).length === 1);
+await deveFalhar("o mesmo reforco NAO tem duas realizacoes", mae,
+  `insert into reforco_realizacoes (reforco_id, aluno_id) values ($1, $2)`, [refM.id, aluno.id]);
+await deveFalhar("como foi fora da lista e recusado", mae,
+  `update reforco_realizacoes set como_foi = 'pessimo' where reforco_id = $1`, [refM.id]);
+await deveFalhar("respostas precisam ser uma lista", mae,
+  `update reforco_realizacoes set respostas = '{"a":1}' where reforco_id = $1`, [refM.id]);
+await deveFalhar("familia sem consentimento NAO registra", tia,
+  `insert into reforco_realizacoes (reforco_id, aluno_id) values ($1, $2)`, [refM.id, aluno.id]);
+await deveFalhar("reforco de um aluno NAO vale para outro aluno", mae,
+  `insert into reforco_realizacoes (reforco_id, aluno_id) values ($1, $2)`, [refM.id, alunoB.id]);
+confere("professor NAO edita a atividade feita",
+  (await comoUsuario(profA, `update reforco_realizacoes set como_foi = 'dificil' returning id`).catch(() => [])).length === 0);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

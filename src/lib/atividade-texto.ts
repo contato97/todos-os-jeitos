@@ -39,3 +39,35 @@ export function nomeDeArquivo(titulo: string) {
       .slice(0, 60) || "atividade"
   );
 }
+
+// "Fazer na plataforma": transforma o material da crianca em blocos. Cada
+// linha com espacos para responder ("______") vira um bloco "linha", com o
+// texto entre os espacos; o resto continua como texto (Markdown).
+export type BlocoMaterial = { tipo: "texto"; md: string } | { tipo: "linha"; partes: string[] };
+
+const ESPACO_RESPOSTA = /_{3,}/;
+
+export function blocosDoMaterial(material: string): BlocoMaterial[] {
+  const blocos: BlocoMaterial[] = [];
+  let texto: string[] = [];
+  const fecharTexto = () => {
+    if (texto.join("").trim()) blocos.push({ tipo: "texto", md: texto.join("\n") });
+    texto = [];
+  };
+  for (const linha of material.split("\n")) {
+    if (ESPACO_RESPOSTA.test(linha)) {
+      fecharTexto();
+      // Tira marcas de Markdown que nao fazem sentido ao lado de um campo
+      const limpa = linha.replace(/\*\*/g, "").replace(/^\s*[-*]\s+/, "");
+      blocos.push({ tipo: "linha", partes: limpa.split(/_{3,}/) });
+    } else {
+      texto.push(linha);
+    }
+  }
+  fecharTexto();
+  return blocos;
+}
+
+export function quantidadeDeRespostas(blocos: BlocoMaterial[]) {
+  return blocos.reduce((total, b) => total + (b.tipo === "linha" ? b.partes.length - 1 : 0), 0);
+}
