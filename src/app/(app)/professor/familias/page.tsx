@@ -6,7 +6,6 @@ import { BOTAO, Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/
 import { AJUDA_PROFESSOR } from "@/lib/ajuda";
 import { rotuloTipoReforco } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { RecadoFamilia } from "./recado-familia";
 
 // Comunicacao com as familias: tudo o que chegou de casa, num lugar so
 export default function ComunicacaoFamilia() {
@@ -15,7 +14,7 @@ export default function ComunicacaoFamilia() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold">Comunicação com a família</h1>
-          <p className="mt-1 max-w-2xl">O que as famílias contaram de casa, os pedidos de reforço e quem já está conectado.</p>
+          <p className="mt-1 max-w-2xl">As conversas com as famílias, o que elas contaram de casa, os pedidos de reforço e quem já está conectado.</p>
         </div>
         <Link href="/professor/convidar" className={BOTAO}>
           Convidar família
@@ -31,7 +30,7 @@ export default function ComunicacaoFamilia() {
 
 async function Conteudo() {
   const supabase = await criarClienteServidor();
-  const [{ data: alunos }, { data: deCasa }, { data: reforcos }, { data: vinculos }] = await Promise.all([
+  const [{ data: alunos }, { data: deCasa }, { data: reforcos }, { data: vinculos }, { data: naoLidas }] = await Promise.all([
     supabase.from("alunos").select("id, nome, ano_escolar").order("nome"),
     supabase
       .from("observacoes")
@@ -42,8 +41,10 @@ async function Conteudo() {
       .limit(20),
     supabase.from("reforcos").select("id, aluno_id, tipo, materia, pedido, resposta, created_at").order("created_at", { ascending: false }).limit(10),
     supabase.from("aluno_familias").select("aluno_id, familia_id, parentesco, consentimento_em, perfis(nome)"),
+    supabase.rpc("conversas_nao_lidas"),
   ]);
   const nomeAluno = new Map((alunos ?? []).map((a) => [a.id, a.nome]));
+  const novas = new Map(((naoLidas ?? []) as { aluno_id: string; nao_lidas: number }[]).map((n) => [n.aluno_id, n.nao_lidas]));
   const um = <T,>(v: T | T[] | null) => (Array.isArray(v) ? v[0] : v);
 
   return (
@@ -111,8 +112,32 @@ async function Conteudo() {
       <div className="space-y-6 xl:col-span-2">
         {alunos && alunos.length > 0 && (
           <Cartao>
-            <h2 className="mb-4 text-xl font-semibold">Mandar recado</h2>
-            <RecadoFamilia alunos={alunos} />
+            <h2 className="text-xl font-semibold">Conversas</h2>
+            <p className="mt-1 text-base">Recados com as famílias, revisados antes de enviar.</p>
+            <ul className="mt-3 divide-y divide-marca/10">
+              {alunos
+                .filter((a) => (vinculos ?? []).some((v) => v.aluno_id === a.id && v.consentimento_em))
+                .sort((a, b) => (novas.get(b.id) ?? 0) - (novas.get(a.id) ?? 0))
+                .map((a) => (
+                  <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                    <Link href={`/professor/alunos/${a.id}/conversa`} className="font-medium underline-offset-4 hover:underline">
+                      {a.nome}
+                    </Link>
+                    {novas.get(a.id) ? (
+                      <Etiqueta tipo="rascunho">
+                        {novas.get(a.id)} {novas.get(a.id) === 1 ? "recado novo" : "recados novos"}
+                      </Etiqueta>
+                    ) : (
+                      <Link href={`/professor/alunos/${a.id}/conversa`} className="text-base underline underline-offset-4">
+                        Abrir
+                      </Link>
+                    )}
+                  </li>
+                ))}
+            </ul>
+            {!(vinculos ?? []).some((v) => v.consentimento_em) && (
+              <p className="mt-2 text-base">Quando uma família aceitar o convite, a conversa com ela aparece aqui.</p>
+            )}
           </Cartao>
         )}
 

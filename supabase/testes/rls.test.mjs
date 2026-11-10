@@ -473,5 +473,38 @@ await deveFalhar("bimestre 5 e recusado", profA, `update relatorios set bimestre
 confere("professor marca a materia da observacao",
   (await comoUsuario(profA, `insert into observacoes (aluno_id, origem, texto, materia) values ($1, 'escola', 'somou ate 20', 'Matemática') returning id`, [aluno.id])).length === 1);
 
+
+// ---------- Conversa familia <-> professor ----------
+console.log("\nConversa");
+await db.query(`insert into privado.segredos (nome, valor) values ('moderacao', 'chave-de-teste')`);
+await deveFalhar("ninguem grava mensagem direto na tabela", mae,
+  `insert into mensagens (aluno_id, autor_id, texto) values ($1, $2, 'oi')`, [aluno.id, mae.id]);
+await deveFalhar("sem a chave do servidor a mensagem NAO e gravada", mae,
+  `select enviar_mensagem($1, 'oi', 'chute', true)`, [aluno.id]);
+await deveFalhar("chave nula NAO grava", mae, `select enviar_mensagem($1, 'oi', null, true)`, [aluno.id]);
+await deveFalhar("usuario NAO le os segredos", mae, `select * from privado.segredos`);
+await comoUsuario(mae, `select enviar_mensagem($1, 'Bom dia, professora!', 'chave-de-teste', true)`, [aluno.id]);
+await comoUsuario(profA, `select enviar_mensagem($1, 'Bom dia! Ele foi otimo hoje.', 'chave-de-teste', true)`, [aluno.id]);
+confere("familia ve a conversa", (await comoUsuario(mae, `select * from mensagens`)).length === 2);
+confere("professor ve a conversa", (await comoUsuario(profA, `select * from mensagens`)).length === 2);
+confere("professor B NAO ve a conversa", (await comoUsuario(profB, `select * from mensagens`)).length === 0);
+confere("escola NAO ve a conversa", (await comoUsuario(escola, `select * from mensagens`)).length === 0);
+confere("especialista NAO ve a conversa", (await comoUsuario(ana, `select * from mensagens`)).length === 0);
+await deveFalhar("familia sem consentimento NAO envia", tia, `select enviar_mensagem($1, 'oi', 'chave-de-teste', true)`, [aluno.id]);
+await deveFalhar("professor B NAO envia para aluno alheio", profB, `select enviar_mensagem($1, 'oi', 'chave-de-teste', true)`, [aluno.id]);
+confere("mensagem NAO pode ser editada",
+  (await comoUsuario(mae, `update mensagens set texto = 'x' returning id`).catch(() => [])).length === 0);
+confere("mensagem NAO pode ser apagada",
+  (await comoUsuario(mae, `delete from mensagens returning id`).catch(() => [])).length === 0);
+const naoLidasMae = await comoUsuario(mae, `select * from conversas_nao_lidas()`);
+confere("familia tem 1 mensagem nova (a do professor)", naoLidasMae[0]?.nao_lidas === 1, JSON.stringify(naoLidasMae));
+await comoUsuario(mae, `select marcar_conversa_lida($1)`, [aluno.id]);
+confere("depois de ler, nao ha novas", (await comoUsuario(mae, `select * from conversas_nao_lidas()`)).length === 0);
+confere("professor B nao recebe contagem alheia", (await comoUsuario(profB, `select * from conversas_nao_lidas()`)).length === 0);
+await comoUsuario(profB, `select marcar_conversa_lida($1)`, [aluno.id]);
+confere("professor B NAO cria leitura em aluno alheio",
+  (await db.query(`select * from conversa_leituras where usuario_id = $1`, [profB.id])).rows.length === 0);
+await deveFalhar("visitante NAO envia", null, `select enviar_mensagem($1, 'oi', 'chave-de-teste', true)`, [aluno.id]);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

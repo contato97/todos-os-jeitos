@@ -16,6 +16,7 @@ export async function perguntarIA({
   conteudo,
   formatoJson,
   registro,
+  esforco = "medium",
 }: {
   sistema: string;
   conteudo: Conteudo;
@@ -23,6 +24,8 @@ export async function perguntarIA({
   formatoJson?: Record<string, unknown>;
   // Para o registro de custo e creditos (ver uso.ts)
   registro: RegistroUso;
+  // "low" para tarefas simples e rapidas (como revisar um recado)
+  esforco?: "low" | "medium" | "high";
 }): Promise<string> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new ErroIA("A IA ainda não está configurada (falta a ANTHROPIC_API_KEY no .env.local).");
@@ -34,9 +37,9 @@ export async function perguntarIA({
       model: MODELO,
       max_tokens: 16000,
       thinking: { type: "adaptive" },
-      // "medium": bom equilibrio entre qualidade e tempo de resposta para textos escolares
+      // "medium" (padrao): bom equilibrio entre qualidade e tempo para textos escolares
       output_config: {
-        effort: "medium",
+        effort: esforco,
         ...(formatoJson ? { format: { type: "json_schema", schema: formatoJson } } : {}),
       },
       // Se o filtro de seguranca recusar o pedido, a API tenta de novo num modelo

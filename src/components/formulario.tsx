@@ -40,6 +40,8 @@ export function Campo({ rotulo, dica, id, ...props }: CampoProps) {
 type AreaTextoProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
   rotulo: string;
   dica?: string;
+  // Para quem precisa mexer no texto pelo codigo (ex.: "usar esta sugestao")
+  ref?: React.Ref<HTMLTextAreaElement>;
 };
 
 export function AreaTexto({ rotulo, dica, id, rows = 4, ...props }: AreaTextoProps) {

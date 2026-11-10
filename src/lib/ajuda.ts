@@ -132,9 +132,9 @@ export const AJUDA_PROFESSOR = {
     titulo: "Comunicação com a família",
     perguntas: [
       {
-        pergunta: "Como mando um recado para a família?",
+        pergunta: "Como converso com a família?",
         resposta:
-          "Em “Comunicação com a família”, escolha o aluno e escreva o recado. Ele vira uma observação compartilhada e aparece no histórico que a família vê.",
+          "Em “Comunicação com a família”, clique no aluno em “Conversas”, ou abra a aba “Conversa” no perfil dele. A família responde pela plataforma, e as mensagens novas aparecem em destaque.",
       },
       {
         pergunta: "Onde vejo o que a família contou de casa?",
@@ -142,6 +142,7 @@ export const AJUDA_PROFESSOR = {
       },
     ],
   },
+conversa: {    titulo: "Conversa com a família",    perguntas: [      {        pergunta: "Por que o recado passa por uma revisão?",        resposta:          "Para a conversa ser sempre respeitosa, dos dois lados. Antes de sair, a inteligência artificial confere se o recado tem ofensas ou desrespeito. Críticas e preocupações ditas com respeito passam normalmente.",      },      {        pergunta: "E se o recado for segurado?",        resposta:          "Ele não é enviado nem guardado. Aparece o motivo e uma sugestão reescrita: você pode usar a sugestão, ajustar e enviar de novo.",      },      {        pergunta: "Quem lê a conversa?",        resposta:          "Só você e as famílias conectadas ao aluno. A coordenação e os especialistas não veem. O nome do aluno é trocado por “[criança]” antes da revisão da IA.",      },    ],  },
   familia: {
     titulo: "Convidar família",
     perguntas: [
@@ -275,6 +276,7 @@ export const AJUDA_FAMILIA = {
       },
     ],
   },
+conversa: {    titulo: "Conversa com o professor",    perguntas: [      {        pergunta: "Como funciona a conversa?",        resposta:          "Você escreve para o professor do seu filho e ele responde por aqui. Se a família tiver mais de uma pessoa conectada, todos veem a mesma conversa.",      },      {        pergunta: "Por que o recado passa por uma revisão?",        resposta:          "Para a conversa ser respeitosa dos dois lados. Se o recado tiver algo que possa ofender, ele não é enviado e aparece uma sugestão para reescrever. Críticas e preocupações ditas com respeito passam normalmente.",      },    ],  },
   casa: {
     titulo: "Como é em casa",
     perguntas: [
