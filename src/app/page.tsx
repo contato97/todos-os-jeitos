@@ -1,5 +1,6 @@
 import { FaEnvelope, FaInstagram, FaWhatsapp, FaYoutube } from "react-icons/fa6";
 import { SiteHeader } from "@/components/site-header";
+import { TabelaPlanos } from "@/components/tabela-planos";
 
 // As cores de destaque (mostarda, coral, lavanda, salvia) aparecem so como faixas
 // decorativas: elas nao tem contraste suficiente para texto sobre o creme.
@@ -112,6 +113,27 @@ const pilares = [
     titulo: "Escola e família do mesmo lado",
     texto: "O que acontece na sala e em casa vira um histórico só, compartilhado com cuidado.",
     faixa: "border-coral",
+  },
+];
+
+const duvidasPlanos = [
+  {
+    pergunta: "Preciso de cartão para começar?",
+    resposta: "Não. O plano Semente é grátis e não pede cartão. Você só assina quando quiser mais alunos e créditos.",
+  },
+  {
+    pergunta: "O que é um crédito?",
+    resposta:
+      "É o que a inteligência artificial usa para adaptar uma atividade. 1 crédito vale até 2 páginas. Relatórios e pedidos de reforço também contam no limite do mês do seu plano.",
+  },
+  {
+    pergunta: "Posso mudar ou cancelar o plano?",
+    resposta: "Sim, a qualquer momento. O plano novo vale a partir do próximo ciclo.",
+  },
+  {
+    pergunta: "Como funciona para escolas?",
+    resposta:
+      "Montamos uma proposta pelo tamanho da escola: número de professores, alunos acompanhados e especialistas. Fale com a gente pelo WhatsApp.",
   },
 ];
 
@@ -279,8 +301,28 @@ export default function Home() {
           </ul>
         </Secao>
 
+        {/* Planos (precos e limites em src/lib/planos.ts) */}
+        <Secao id="planos" rotulo="Planos" titulo="Planos para cada jeito de ensinar" className="bg-white/50">
+          <p className="-mt-6 mb-10 max-w-2xl">
+            Comece grátis e veja a diferença com os seus alunos. Quando precisar de mais, escolha o plano que cabe na sua
+            rotina.
+          </p>
+          <TabelaPlanos />
+          <div className="mx-auto mt-12 max-w-3xl">
+            <h3 className="text-xl font-semibold">Dúvidas sobre os planos</h3>
+            <div className="mt-4 space-y-3">
+              {duvidasPlanos.map((d) => (
+                <details key={d.pergunta} className="rounded-2xl bg-white/80 p-5 ring-1 ring-marca/10">
+                  <summary className="cursor-pointer font-medium">{d.pergunta}</summary>
+                  <p className="mt-2">{d.resposta}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </Secao>
+
         {/* Compromisso */}
-        <Secao id="compromisso" rotulo="Nosso compromisso" titulo="Cuidado em cada detalhe" className="bg-white/50">
+        <Secao id="compromisso" rotulo="Nosso compromisso" titulo="Cuidado em cada detalhe">
           <ul className="grid gap-6 sm:grid-cols-2">
             {compromissos.map((c) => (
               <Cartao key={c.titulo} {...c} />

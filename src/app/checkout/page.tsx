@@ -34,8 +34,8 @@ async function Resumo({ searchParams }: { searchParams: Promise<Record<string, s
     return (
       <div className="mx-auto max-w-xl text-center">
         <h1 className="text-3xl font-semibold">Escolha um plano</h1>
-        <p className="mt-3">Não encontramos o plano escolhido. Volte para a página de planos e escolha de novo.</p>
-        <Link href="/planos" className="mt-6 inline-block rounded-full bg-marca px-6 py-3 font-medium text-creme hover:bg-petroleo">
+        <p className="mt-3">Não encontramos o plano escolhido. Volte aos planos e escolha de novo.</p>
+        <Link href="/#planos" className="mt-6 inline-block rounded-full bg-marca px-6 py-3 font-medium text-creme hover:bg-petroleo">
           Ver planos
         </Link>
       </div>
@@ -48,7 +48,7 @@ async function Resumo({ searchParams }: { searchParams: Promise<Record<string, s
   return (
     <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <section aria-labelledby="titulo-checkout" className="min-w-0">
-        <Link href="/planos" className="underline underline-offset-4">
+        <Link href="/#planos" className="underline underline-offset-4">
           ← Voltar aos planos
         </Link>
         <h1 id="titulo-checkout" className="mt-4 text-3xl font-semibold">

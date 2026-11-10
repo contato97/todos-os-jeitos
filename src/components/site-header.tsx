@@ -8,12 +8,12 @@ import Link from "next/link";
 import { useState } from "react";
 
 const secoes = [
-  // "/#..." (e nao so "#..."): assim os links funcionam tambem fora da pagina inicial, como em /planos
+  // "/#..." (e nao so "#..."): assim os links funcionam tambem fora da pagina inicial, como no checkout
   { href: "/#quem-somos", rotulo: "Quem somos" },
   // "Como funciona" leva ao desafio, que abre a historia: o problema e depois a nossa proposta.
   { href: "/#desafio", rotulo: "Como funciona" },
   { href: "/#para-quem", rotulo: "Para quem é" },
-  { href: "/planos", rotulo: "Planos" },
+  { href: "/#planos", rotulo: "Planos" },
 ];
 
 export function SiteHeader() {
