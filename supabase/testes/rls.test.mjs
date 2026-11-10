@@ -506,5 +506,53 @@ confere("professor B NAO cria leitura em aluno alheio",
   (await db.query(`select * from conversa_leituras where usuario_id = $1`, [profB.id])).rows.length === 0);
 await deveFalhar("visitante NAO envia", null, `select enviar_mensagem($1, 'oi', 'chave-de-teste', true)`, [aluno.id]);
 
+
+// ---------- Encaminhamento com assinatura da familia ----------
+console.log("\nEncaminhamento");
+// a especialista Ana volta a acompanhar a Lia, com relatorios liberados
+await db.query(`insert into escola_especialistas (escola_id, especialista_id) values ($1, $2) on conflict do nothing`, [esc.id, ana.id]);
+await comoUsuario(escola, `insert into especialista_alunos (aluno_id, especialista_id, escola_id) values ($1, $2, $3)`, [aluno.id, ana.id, esc.id]);
+
+const [enc] = await comoUsuario(profA,
+  `insert into encaminhamentos (aluno_id, motivo, conteudo, especialidades) values ($1, 'troca letras', 'texto', '{fonoaudiologo}') returning id`, [aluno.id]);
+await deveFalhar("especialidade fora da lista e recusada", profA,
+  `insert into encaminhamentos (aluno_id, motivo, especialidades) values ($1, 'x', '{astrologo}')`, [aluno.id]);
+await deveFalhar("professor B NAO cria encaminhamento de aluno alheio", profB,
+  `insert into encaminhamentos (aluno_id, motivo) values ($1, 'x')`, [aluno.id]);
+confere("familia NAO ve rascunho", (await comoUsuario(mae, `select * from encaminhamentos`)).length === 0);
+confere("escola NAO ve rascunho", (await comoUsuario(escola, `select * from encaminhamentos`)).length === 0);
+await deveFalhar("rascunho NAO pode ser compartilhado", profA,
+  `update encaminhamentos set compartilhado_com_familia = true where id = $1`, [enc.id]);
+await deveFalhar("familia NAO assina rascunho", mae, `select assinar_encaminhamento($1, 'Maria Souza')`, [enc.id]);
+
+await comoUsuario(profA, `update encaminhamentos set status = 'revisado' where id = $1`, [enc.id]);
+confere("escola ve o encaminhamento revisado", (await comoUsuario(escola, `select * from encaminhamentos`)).length === 1);
+confere("familia ainda NAO ve (nao compartilhado)", (await comoUsuario(mae, `select * from encaminhamentos`)).length === 0);
+await comoUsuario(profA, `update encaminhamentos set compartilhado_com_familia = true where id = $1`, [enc.id]);
+confere("familia ve o compartilhado", (await comoUsuario(mae, `select * from encaminhamentos`)).length === 1);
+confere("especialista ve o compartilhado", (await comoUsuario(ana, `select * from encaminhamentos`)).length === 1);
+confere("professor B NAO ve", (await comoUsuario(profB, `select * from encaminhamentos`)).length === 0);
+confere("familia NAO edita o texto",
+  (await comoUsuario(mae, `update encaminhamentos set conteudo = 'x' returning id`).catch(() => [])).length === 0);
+
+await deveFalhar("ninguem grava assinatura direto", mae,
+  `insert into encaminhamento_assinaturas (encaminhamento_id, assinante_id, nome_assinante, papel, conteudo_sha256) values ($1, $2, 'Maria', 'familia', 'x')`, [enc.id, mae.id]);
+await deveFalhar("nome curto demais e recusado", mae, `select assinar_encaminhamento($1, 'M')`, [enc.id]);
+await deveFalhar("professor NAO assina como familia", profA, `select assinar_encaminhamento($1, 'Prof A')`, [enc.id]);
+await deveFalhar("familia sem consentimento NAO assina", tia, `select assinar_encaminhamento($1, 'Pai da Lia')`, [enc.id]);
+await comoUsuario(mae, `select assinar_encaminhamento($1, 'Maria Souza')`, [enc.id]);
+const assin = await comoUsuario(profA, `select * from encaminhamento_assinaturas`);
+confere("professor ve a assinatura com o codigo do texto", assin.length === 1 && assin[0].conteudo_sha256.length === 64);
+confere("escola ve a assinatura", (await comoUsuario(escola, `select * from encaminhamento_assinaturas`)).length === 1);
+confere("professor B NAO ve a assinatura", (await comoUsuario(profB, `select * from encaminhamento_assinaturas`)).length === 0);
+await deveFalhar("a mesma pessoa NAO assina duas vezes", mae, `select assinar_encaminhamento($1, 'Maria Souza')`, [enc.id]);
+await deveFalhar("depois de assinado o texto NAO muda", profA,
+  `update encaminhamentos set conteudo = 'outro texto' where id = $1`, [enc.id]);
+await deveFalhar("depois de assinado NAO deixa de ser compartilhado", profA,
+  `update encaminhamentos set compartilhado_com_familia = false where id = $1`, [enc.id]);
+await deveFalhar("depois de assinado NAO pode ser apagado", profA, `delete from encaminhamentos where id = $1`, [enc.id]);
+confere("assinatura NAO pode ser apagada",
+  (await comoUsuario(mae, `delete from encaminhamento_assinaturas returning id`).catch(() => [])).length === 0);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

@@ -37,6 +37,7 @@ async function CabecalhoAluno({ params }: { params: Promise<{ id: string }> }) {
             { href: `${base}/observacoes`, rotulo: "Observações" },
             { href: `${base}/atividades`, rotulo: "Atividades" },
             { href: `${base}/relatorios`, rotulo: "Relatórios" },
+            { href: `${base}/encaminhamentos`, rotulo: "Encaminhamentos" },
             { href: `${base}/familia`, rotulo: "Família" },
             { href: `${base}/conversa`, rotulo: "Conversa" },
           ]}

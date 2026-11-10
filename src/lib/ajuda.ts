@@ -128,6 +128,31 @@ export const AJUDA_PROFESSOR = {
       },
     ],
   },
+  encaminhamentos: {
+    titulo: "Encaminhamentos",
+    perguntas: [
+      {
+        pergunta: "Para que serve o encaminhamento?",
+        resposta:
+          "Para a família levar a um profissional (fonoaudiólogo, psicólogo, terapeuta ocupacional...) um relatório simples e objetivo do que você observou em sala, do que a escola já tentou e de que tipo de avaliação procurar.",
+      },
+      {
+        pergunta: "A IA diz qual é o diagnóstico?",
+        resposta:
+          "Não. O encaminhamento descreve fatos observados e sugere tipos de profissional para avaliar. Diagnóstico é papel do profissional de saúde.",
+      },
+      {
+        pergunta: "Como a família assina?",
+        resposta:
+          "Depois de revisar, marque “Enviar para a família assinar”. A família lê pela plataforma, digita o nome completo e confirma. Fica registrado o nome, a data, a hora e um código de verificação. A partir daí o texto não muda mais.",
+      },
+      {
+        pergunta: "Posso imprimir para a pasta do aluno?",
+        resposta:
+          "Sim. Depois de revisado, use “Imprimir ou salvar em PDF”. O documento sai com o logo da escola e o bloco de assinaturas.",
+      },
+    ],
+  },
   comunicacao: {
     titulo: "Comunicação com a família",
     perguntas: [
@@ -277,6 +302,25 @@ export const AJUDA_FAMILIA = {
     ],
   },
 conversa: {    titulo: "Conversa com o professor",    perguntas: [      {        pergunta: "Como funciona a conversa?",        resposta:          "Você escreve para o professor do seu filho e ele responde por aqui. Se a família tiver mais de uma pessoa conectada, todos veem a mesma conversa.",      },      {        pergunta: "Por que o recado passa por uma revisão?",        resposta:          "Para a conversa ser respeitosa dos dois lados. Se o recado tiver algo que possa ofender, ele não é enviado e aparece uma sugestão para reescrever. Críticas e preocupações ditas com respeito passam normalmente.",      },    ],  },
+  encaminhamentos: {
+    titulo: "Encaminhamentos",
+    perguntas: [
+      {
+        pergunta: "O que é o encaminhamento?",
+        resposta:
+          "É um relatório que o professor prepara para você levar a um profissional, como fonoaudiólogo ou psicólogo. Ele conta o que foi observado na escola e sugere que tipo de avaliação procurar. Não traz diagnóstico.",
+      },
+      {
+        pergunta: "Por que preciso assinar?",
+        resposta:
+          "A assinatura registra que você leu e recebeu o encaminhamento. Fica guardada com o nome, a data, a hora e um código de verificação, e a escola pode imprimir para a pasta do aluno.",
+      },
+      {
+        pergunta: "Como levo à consulta?",
+        resposta: "Abra o encaminhamento e clique em “Imprimir ou salvar em PDF”. Você pode imprimir ou mostrar no celular.",
+      },
+    ],
+  },
   casa: {
     titulo: "Como é em casa",
     perguntas: [

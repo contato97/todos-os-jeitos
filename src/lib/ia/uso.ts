@@ -3,7 +3,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { custoEmDolar } from "./precos";
 
-export type AcaoIA = "adaptar" | "relatorio" | "reforco" | "moderacao";
+export type AcaoIA = "adaptar" | "relatorio" | "reforco" | "moderacao" | "encaminhamento";
 
 export type RegistroUso = { acao: AcaoIA; paginas: number; creditos: number };
 

@@ -9,7 +9,7 @@ import { FormularioConsentimento } from "./formulario-consentimento";
 export default async function MeusFilhos() {
   const supabase = await criarClienteServidor();
   const usuario = await buscarUsuario();
-  const [{ data: pendentes }, { data: vinculos }, { data: naoLidas }] = await Promise.all([
+  const [{ data: pendentes }, { data: vinculos }, { data: naoLidas }, { data: encaminhamentos }] = await Promise.all([
     supabase.rpc("consentimentos_pendentes"),
     supabase
       .from("aluno_familias")
@@ -17,10 +17,17 @@ export default async function MeusFilhos() {
       .not("consentimento_em", "is", null)
       .order("created_at"),
     supabase.rpc("conversas_nao_lidas"),
+    // So os encaminhamentos enviados para a familia (RLS)
+    supabase.from("encaminhamentos").select("aluno_id, encaminhamento_assinaturas(assinante_id)"),
   ]);
   const filhos = (vinculos ?? []).map((v) => ({ id: v.aluno_id, ...(Array.isArray(v.alunos) ? v.alunos[0] : v.alunos) }));
   const listaPendentes = (pendentes ?? []) as { aluno_id: string; primeiro_nome: string }[];
   const novas = new Map(((naoLidas ?? []) as { aluno_id: string; nao_lidas: number }[]).map((n) => [n.aluno_id, n.nao_lidas]));
+  const paraAssinar = new Set(
+    (encaminhamentos ?? [])
+      .filter((e) => !(e.encaminhamento_assinaturas ?? []).some((a) => a.assinante_id === usuario?.id))
+      .map((e) => e.aluno_id),
+  );
 
   return (
     <>
@@ -44,7 +51,16 @@ export default async function MeusFilhos() {
         <ul className="grid gap-4 sm:grid-cols-2">
           {filhos.map((f) => (
             <li key={f.id}>
-              <Link href={novas.get(f.id) ? `/familia/filhos/${f.id}/conversa` : `/familia/filhos/${f.id}`} className="block">
+              <Link
+                href={
+                  novas.get(f.id)
+                    ? `/familia/filhos/${f.id}/conversa`
+                    : paraAssinar.has(f.id)
+                      ? `/familia/filhos/${f.id}/encaminhamentos`
+                      : `/familia/filhos/${f.id}`
+                }
+                className="block"
+              >
                 <Cartao className="hover:ring-petroleo">
                   <p className="text-xl font-semibold">{f.nome}</p>
                   {f.ano_escolar && <p>{f.ano_escolar}</p>}
@@ -53,6 +69,11 @@ export default async function MeusFilhos() {
                       <Etiqueta tipo="rascunho">
                         {novas.get(f.id)} {novas.get(f.id) === 1 ? "recado novo do professor" : "recados novos do professor"}
                       </Etiqueta>
+                    </p>
+                  )}
+                  {paraAssinar.has(f.id) && (
+                    <p className="mt-2">
+                      <Etiqueta tipo="casa">Encaminhamento para assinar</Etiqueta>
                     </p>
                   )}
                   <p className="mt-3 text-base underline underline-offset-4">Ver histórico, conversa e reforço</p>

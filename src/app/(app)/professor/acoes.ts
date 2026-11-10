@@ -10,9 +10,16 @@ import { ErroIA, perguntarIA } from "@/lib/ia/cliente";
 import { mencionaDiagnostico, AVISO_DIAGNOSTICO } from "@/lib/ia/diagnostico";
 import { casaParaIA } from "@/lib/ia/casa";
 import { creditosPorPaginas, paginasDeTexto } from "@/lib/ia/precos";
-import { SCHEMA_RELATORIO, SISTEMA_ADAPTAR, SISTEMA_RELATORIO, descreverPerfil } from "@/lib/ia/prompts";
+import {
+  SCHEMA_ENCAMINHAMENTO,
+  SCHEMA_RELATORIO,
+  SISTEMA_ADAPTAR,
+  SISTEMA_ENCAMINHAMENTO,
+  SISTEMA_RELATORIO,
+  descreverPerfil,
+} from "@/lib/ia/prompts";
 import { lerCampo, type EstadoFormulario } from "@/lib/formulario";
-import { AREAS_OBSERVACAO, PRIORIDADES_ADAPTACAO, rotuloBimestre } from "@/lib/opcoes-cadastro";
+import { AREAS_OBSERVACAO, ESPECIALIDADES_ENCAMINHAMENTO, PRIORIDADES_ADAPTACAO, rotuloBimestre } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
 
 const CAMPOS_PERFIL = [
@@ -425,4 +432,118 @@ export async function removerFamilia(alunoId: string, familiaId: string) {
   const supabase = await criarClienteServidor();
   await supabase.from("aluno_familias").delete().eq("aluno_id", alunoId).eq("familia_id", familiaId);
   refresh();
+}
+
+// ---------------------------------------------------------------- Encaminhamentos
+
+const ESPECIALIDADES_VALIDAS = ESPECIALIDADES_ENCAMINHAMENTO.map((e) => e.valor as string);
+
+export async function gerarEncaminhamento(
+  alunoId: string,
+  _: EstadoFormulario,
+  formData: FormData,
+): Promise<EstadoFormulario> {
+  const motivo = lerCampo(formData, "motivo").slice(0, 2000);
+  const inicio = lerCampo(formData, "inicio");
+  const valores = { motivo, inicio };
+  if (!motivo) return { erro: "Conte o motivo do encaminhamento.", valores };
+
+  const supabase = await criarClienteServidor();
+  const [{ data: aluno }, { data: observacoes }] = await Promise.all([
+    supabase.from("alunos").select("*").eq("id", alunoId).maybeSingle(),
+    supabase
+      .from("observacoes")
+      .select("texto, data_observacao, origem, materia")
+      .eq("aluno_id", alunoId)
+      .gte("data_observacao", inicio || "1900-01-01")
+      .order("data_observacao")
+      .limit(120),
+  ]);
+  if (!aluno) return { erro: "Aluno não encontrado.", valores };
+  const casa = await casaParaIA(supabase, alunoId);
+
+  const listaObs = observacoes?.length
+    ? observacoes
+        .map((o) => `- ${o.data_observacao} (${o.origem === "casa" ? "relato da família" : "escola"}${o.materia ? `, ${o.materia}` : ""}): ${o.texto}`)
+        .join("\n")
+    : "Nenhuma observação registrada no período.";
+
+  let resultado: { conteudo: string; especialidades: string[] };
+  try {
+    const json = await perguntarIA({
+      sistema: SISTEMA_ENCAMINHAMENTO,
+      registro: { acao: "encaminhamento", paginas: 0, creditos: 1 },
+      formatoJson: SCHEMA_ENCAMINHAMENTO,
+      conteudo: [
+        {
+          type: "text",
+          text: `Motivo informado pelo professor:\n${motivo}\n\nPerfil do aluno:\n${descreverPerfil(aluno, casa)}\n\nObservações${inicio ? ` desde ${inicio}` : ""}:\n${listaObs}`,
+        },
+      ],
+    });
+    resultado = JSON.parse(json);
+  } catch (e) {
+    return { erro: e instanceof ErroIA ? e.message : "Erro ao gerar o encaminhamento.", valores };
+  }
+
+  const { data: enc, error } = await supabase
+    .from("encaminhamentos")
+    .insert({
+      aluno_id: alunoId,
+      motivo,
+      conteudo: resultado.conteudo,
+      especialidades: resultado.especialidades.filter((e) => ESPECIALIDADES_VALIDAS.includes(e)),
+    })
+    .select("id")
+    .single();
+  if (error || !enc) return { erro: "Não foi possível salvar o rascunho.", valores };
+  redirect(`/professor/alunos/${alunoId}/encaminhamentos/${enc.id}`);
+}
+
+export async function salvarEncaminhamento(
+  encaminhamentoId: string,
+  _: EstadoFormulario,
+  formData: FormData,
+): Promise<EstadoFormulario> {
+  const conteudo = lerCampo(formData, "conteudo");
+  const acao = lerCampo(formData, "acao"); // salvar | revisar | reabrir
+  const compartilhar = formData.get("compartilhar") === "on";
+  const especialidades = formData.getAll("especialidades").map(String).filter((e) => ESPECIALIDADES_VALIDAS.includes(e));
+  if (!conteudo) return { erro: "O encaminhamento não pode ficar vazio." };
+
+  const status = acao === "revisar" ? "revisado" : acao === "reabrir" ? "rascunho" : lerCampo(formData, "status");
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase
+    .from("encaminhamentos")
+    .update({
+      conteudo,
+      especialidades,
+      status,
+      compartilhado_com_familia: status === "revisado" && compartilhar,
+    })
+    .eq("id", encaminhamentoId);
+  if (error) {
+    return {
+      erro: error.message.includes("encaminhamento_assinado")
+        ? "A família já assinou este encaminhamento: o texto não pode mais ser alterado."
+        : "Não foi possível salvar.",
+    };
+  }
+  refresh();
+  return {
+    sucesso:
+      status === "revisado"
+        ? compartilhar
+          ? "Encaminhamento revisado e enviado para a família assinar."
+          : "Encaminhamento revisado. Marque “Enviar para a família” quando quiser que ela assine."
+        : "Rascunho salvo.",
+    aviso: mencionaDiagnostico(conteudo) ? AVISO_DIAGNOSTICO : undefined,
+  };
+}
+
+export async function apagarEncaminhamento(encaminhamentoId: string, alunoId: string) {
+  const supabase = await criarClienteServidor();
+  // Se ja foi assinado, o banco nao deixa apagar (fica para a pasta do aluno)
+  await supabase.from("encaminhamentos").delete().eq("id", encaminhamentoId);
+  redirect(`/professor/alunos/${alunoId}/encaminhamentos`);
 }

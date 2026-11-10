@@ -167,3 +167,6 @@ export function rotuloBimestre(bimestre: number | null | undefined, ano?: number
   if (!bimestre) return null;
   return `${bimestre}º bimestre${ano ? ` de ${ano}` : ""}`;
 }
+
+// Tipos de profissional que um encaminhamento pode sugerir (sem "outro")
+export const ESPECIALIDADES_ENCAMINHAMENTO = PROFISSOES.filter((p) => p.valor !== "outro");

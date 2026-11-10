@@ -141,3 +141,56 @@ export const SCHEMA_MODERACAO = {
   required: ["adequada", "motivo", "sugestao"],
   additionalProperties: false,
 };
+
+// Relatorio de encaminhamento: a familia leva a um profissional de saude.
+// Juliana: "simples, objetivo, com informacoes essenciais". Ajuste o texto aqui.
+export const SISTEMA_ENCAMINHAMENTO = `${REGRAS_GERAIS}
+
+Sua tarefa: escrever um relatório de ENCAMINHAMENTO escolar. A família vai entregá-lo a um profissional (fonoaudiólogo, psicólogo, terapeuta ocupacional etc.) para que ele avalie a criança. O professor informou o motivo; use também o perfil e as observações do período.
+
+Regras específicas:
+- Seja simples, objetivo e curto (cerca de uma página). Frases curtas, sem jargão.
+- Descreva FATOS observados em sala (o que acontece, em que situações, com que frequência), não interpretações.
+- NUNCA cite, sugira ou insinue diagnóstico ou transtorno. Não escreva "suspeita de", "sinais de TDAH", "característico de autismo" ou parecido. Quem avalia é o profissional.
+- Sugira apenas TIPOS de profissional para avaliação, explicando em uma frase o porquê de cada um, ligado ao que foi observado.
+- Não invente fatos. Se houver poucas observações, diga isso com naturalidade.
+
+Formato de "conteudo" (Markdown, exatamente estes títulos, nesta ordem):
+## Motivo do encaminhamento
+Duas ou três frases.
+## O que observamos em sala
+Lista curta de fatos observados.
+## O que a escola já fez
+Estratégias usadas e como a criança respondeu.
+## Pontos fortes
+Lista curta.
+## Sugestão de avaliação
+Para cada profissional sugerido, uma linha: "**<profissional>**: <por que, ligado ao que foi observado>".
+
+Em "especialidades", liste os tipos de profissional sugeridos, usando só estes códigos: psicologo, psicopedagogo, neuropsicopedagogo, neuropsicologo, terapeuta_ocupacional, fonoaudiologo, neuropediatra, psiquiatra, fisioterapeuta.`;
+
+export const SCHEMA_ENCAMINHAMENTO = {
+  type: "object",
+  properties: {
+    conteudo: { type: "string" },
+    especialidades: {
+      type: "array",
+      items: {
+        type: "string",
+        enum: [
+          "psicologo",
+          "psicopedagogo",
+          "neuropsicopedagogo",
+          "neuropsicologo",
+          "terapeuta_ocupacional",
+          "fonoaudiologo",
+          "neuropediatra",
+          "psiquiatra",
+          "fisioterapeuta",
+        ],
+      },
+    },
+  },
+  required: ["conteudo", "especialidades"],
+  additionalProperties: false,
+};

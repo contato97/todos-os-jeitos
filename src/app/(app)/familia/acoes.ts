@@ -198,3 +198,26 @@ export async function salvarComoEmCasa(alunoId: string, _: EstadoFormulario, for
   refresh();
   return { sucesso: "Salvo! O professor já pode ver.", valores };
 }
+
+// Assinatura do encaminhamento: o banco confere se a pessoa e da familia do
+// aluno e se o encaminhamento foi enviado para assinar; guarda nome, data e
+// o codigo do texto assinado.
+export async function assinarEncaminhamento(
+  encaminhamentoId: string,
+  _: EstadoFormulario,
+  formData: FormData,
+): Promise<EstadoFormulario> {
+  const nome = lerCampo(formData, "nome").slice(0, 160);
+  const valores = { nome };
+  if (formData.get("ciente") !== "on") return { erro: "Para assinar, marque que leu e está ciente.", valores };
+  if (nome.length < 3) return { erro: "Digite seu nome completo.", valores };
+
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.rpc("assinar_encaminhamento", { p_encaminhamento: encaminhamentoId, p_nome: nome });
+  if (error) {
+    if (error.code === "23505") return { erro: "Você já assinou este encaminhamento.", valores };
+    return { erro: "Não foi possível assinar agora. Tente de novo.", valores };
+  }
+  refresh();
+  return { sucesso: "Assinado! O professor e a escola já podem ver a sua assinatura." };
+}

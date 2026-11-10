@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Carregando } from "@/components/area/em-breve";
 import { RegistrosEspecialistas, buscarRegistrosEspecialistas } from "@/components/area/registros-especialistas";
+import { ListaEncaminhamentos } from "@/components/area/lista-encaminhamentos";
 import { FormularioConvite } from "@/components/area/formulario-convite";
 import { Cartao, Vazio, formatarData } from "@/components/ui";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -114,6 +115,8 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
               </ul>
             )}
           </Cartao>
+
+          <ListaEncaminhamentos alunoId={id} />
 
           {orientacoes.length > 0 && (
             <section aria-labelledby="titulo-esp" className="space-y-3">
