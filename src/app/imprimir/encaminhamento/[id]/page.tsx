@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { codigoVerificacao } from "@/components/area/assinaturas-encaminhamento";
+import { codigoVerificacao, rotuloPapel } from "@/components/area/assinaturas-encaminhamento";
 import { TextoFormatado, formatarData } from "@/components/ui";
 import { rotuloProfissao } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -23,7 +23,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const { data: enc } = await supabase
     .from("encaminhamentos")
     .select(
-      "conteudo, especialidades, status, created_at, aluno_id, professor_id, alunos(nome, ano_escolar, data_nascimento), encaminhamento_assinaturas(id, nome_assinante, papel, conteudo_sha256, assinado_em)",
+      "conteudo, especialidades, status, created_at, aluno_id, professor_id, alunos(nome, ano_escolar, data_nascimento), encaminhamento_assinaturas(id, nome_assinante, papel, cargo, conteudo_sha256, assinado_em)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -78,17 +78,18 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
             <p className="border-t border-marca/60 pt-2">{professor?.nome ?? "Professor(a)"}</p>
             <p className="text-sm">Professor(a) responsável</p>
           </div>
-          {assinaturas.length ? (
-            assinaturas.map((a) => (
-              <div key={a.id}>
-                <p className="border-t border-marca/60 pt-2">{a.nome_assinante}</p>
-                <p className="text-sm">
-                  Responsável pela criança · assinado eletronicamente na plataforma em {formatarData(a.assinado_em, true)}
-                </p>
-                <p className="text-sm">Código de verificação: {codigoVerificacao(a.conteudo_sha256)}</p>
-              </div>
-            ))
-          ) : (
+          {assinaturas.map((a) => (
+            <div key={a.id}>
+              <p className="border-t border-marca/60 pt-2">{a.nome_assinante}</p>
+              <p className="text-sm">
+                {a.papel === "familia" ? "Responsável pela criança" : rotuloPapel(a.papel, a.cargo)} · assinado
+                eletronicamente na plataforma em {formatarData(a.assinado_em, true)}
+              </p>
+              <p className="text-sm">Código de verificação: {codigoVerificacao(a.conteudo_sha256)}</p>
+            </div>
+          ))}
+          {/* Sem assinatura da familia: linha em branco para assinar a mao */}
+          {!assinaturas.some((a) => a.papel === "familia") && (
             <div>
               <p className="mt-6 border-t border-marca/60 pt-2">&nbsp;</p>
               <p className="text-sm">Responsável pela criança (nome e assinatura)</p>

@@ -5,6 +5,7 @@ import { ComoUsar } from "@/components/area/como-usar";
 import { Carregando } from "@/components/area/em-breve";
 import { RegistrosEspecialistas, buscarRegistrosEspecialistas } from "@/components/area/registros-especialistas";
 import { ListaEncaminhamentos } from "@/components/area/lista-encaminhamentos";
+import { DocumentosEscola } from "@/components/area/documentos-escola";
 import { Cartao, TextoFormatado, Vazio, formatarData } from "@/components/ui";
 import { AJUDA_ESPECIALISTA } from "@/lib/ajuda";
 import { buscarUsuario } from "@/lib/auth";
@@ -130,6 +131,12 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
 
         <div className="min-w-0 space-y-6 lg:col-span-2">
           <ListaEncaminhamentos alunoId={id} />
+          <section aria-labelledby="titulo-docs-escola" className="space-y-3">
+            <h2 id="titulo-docs-escola" className="text-xl font-semibold">
+              Documentos da escola
+            </h2>
+            <DocumentosEscola alunoId={id} />
+          </section>
           <ComoUsar secao={AJUDA_ESPECIALISTA.registros} />
           <Cartao>
             <h2 className="mb-4 text-xl font-semibold">Registrar informação</h2>

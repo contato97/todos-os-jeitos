@@ -24,7 +24,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await criarClienteServidor();
   const { data: encaminhamentos } = await supabase
     .from("encaminhamentos")
-    .select("id, motivo, status, compartilhado_com_familia, created_at, encaminhamento_assinaturas(nome_assinante, assinado_em)")
+    .select("id, motivo, status, compartilhado_com_familia, created_at, encaminhamento_assinaturas(papel)")
     .eq("aluno_id", id)
     .order("created_at", { ascending: false });
 
@@ -58,7 +58,9 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
                       <div className="mt-2 flex flex-wrap gap-2">
                         {e.status === "rascunho" ? <Etiqueta tipo="rascunho">Rascunho</Etiqueta> : <Etiqueta tipo="revisado">Revisado</Etiqueta>}
                         {assinaturas.length > 0 ? (
-                          <Etiqueta tipo="compartilhado">Assinado pela família</Etiqueta>
+                          <Etiqueta tipo="compartilhado">
+                            Assinado por {[...new Set(assinaturas.map((a) => (a.papel === "familia" ? "família" : "escola")))].join(" e ")}
+                          </Etiqueta>
                         ) : (
                           e.compartilhado_com_familia && <Etiqueta tipo="casa">Aguardando assinatura</Etiqueta>
                         )}

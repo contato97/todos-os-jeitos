@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { ComoUsar } from "@/components/area/como-usar";
 import { Carregando } from "@/components/area/em-breve";
 import { buscarRegistrosEspecialistas } from "@/components/area/registros-especialistas";
+import { DocumentosEscola } from "@/components/area/documentos-escola";
 import { AJUDA_FAMILIA } from "@/lib/ajuda";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { HistoricoFamilia } from "./historico-familia";
@@ -47,6 +48,16 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
     ? await supabase.from("perfis").select("nome").eq("id", aluno.professor_id).maybeSingle()
     : { data: null };
   const rels = (relatorios ?? []) as RelatorioFamilia[];
+  // Assinaturas da escola nos relatorios compartilhados (o RLS libera so esses)
+  const { data: assinaturas } = rels.length
+    ? await supabase
+        .from("relatorio_assinaturas")
+        .select("relatorio_id, nome_assinante, cargo, assinado_em")
+        .in(
+          "relatorio_id",
+          rels.map((r) => r.id),
+        )
+    : { data: [] };
 
   return (
     <HistoricoFamilia
@@ -56,6 +67,8 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
       atividades={atividades ?? []}
       observacoes={observacoes ?? []}
       registrosEspecialistas={registrosEsp}
+      assinaturasRelatorios={assinaturas ?? []}
+      documentosEscola={<DocumentosEscola alunoId={id} />}
     />
   );
 }

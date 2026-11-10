@@ -420,6 +420,13 @@ export async function salvarRelatorio(
   };
 }
 
+// Relatorio assinado pela escola: o texto trava, mas compartilhar com a familia continua livre
+export async function compartilharRelatorio(relatorioId: string, compartilhar: boolean) {
+  const supabase = await criarClienteServidor();
+  await supabase.from("relatorios").update({ compartilhado_com_familia: compartilhar }).eq("id", relatorioId);
+  refresh();
+}
+
 export async function apagarRelatorio(relatorioId: string, alunoId: string) {
   const supabase = await criarClienteServidor();
   await supabase.from("relatorios").delete().eq("id", relatorioId);

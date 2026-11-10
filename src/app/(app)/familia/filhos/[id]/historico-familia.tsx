@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { BOTAO, Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
 import { versaoDoAluno } from "@/lib/atividade-texto";
-import { rotuloBimestre } from "@/lib/opcoes-cadastro";
+import { rotuloBimestre, rotuloCargo } from "@/lib/opcoes-cadastro";
 import { RegistrosEspecialistas, type RegistroEspecialista } from "@/components/area/registros-especialistas";
 
 // Parte visual do historico do filho. Fica separada da busca de dados para ser
@@ -20,6 +20,9 @@ export type DadosHistorico = {
   atividades: { id: string; titulo: string; conteudo_adaptado: string | null; dicas_familia?: string | null }[];
   observacoes: { id: string; texto: string; data_observacao: string; materia?: string | null }[];
   registrosEspecialistas?: RegistroEspecialista[];
+  assinaturasRelatorios?: { relatorio_id: string; nome_assinante: string; cargo: string | null; assinado_em: string }[];
+  // Bloco pronto com os documentos que a escola compartilhou (componente do servidor)
+  documentosEscola?: React.ReactNode;
   abertos?: boolean; // vitrine: mostra os itens ja expandidos
 };
 
@@ -30,6 +33,8 @@ export function HistoricoFamilia({
   atividades,
   observacoes,
   registrosEspecialistas = [],
+  assinaturasRelatorios = [],
+  documentosEscola,
   abertos,
 }: DadosHistorico) {
   return (
@@ -70,6 +75,14 @@ export function HistoricoFamilia({
                       </summary>
                       <div className="mt-3">
                         <TextoFormatado texto={r.versao_familia ?? ""} />
+                        {assinaturasRelatorios
+                          .filter((a) => a.relatorio_id === r.id)
+                          .map((a) => (
+                            <p key={a.nome_assinante} className="mt-4 rounded-xl bg-salvia/15 p-3 text-base">
+                              ✓ Assinado pela escola: <strong>{a.nome_assinante}</strong>
+                              {rotuloCargo(a.cargo) ? ` (${rotuloCargo(a.cargo)})` : ""} em {formatarData(a.assinado_em)}
+                            </p>
+                          ))}
                         <Link
                           href={`/imprimir/relatorio/${r.id}?versao=familia&aluno=${id}`}
                           target="_blank"
@@ -149,6 +162,15 @@ export function HistoricoFamilia({
             Orientações dos especialistas
           </h2>
           <RegistrosEspecialistas registros={registrosEspecialistas} />
+        </section>
+      )}
+
+      {documentosEscola && (
+        <section aria-labelledby="titulo-docs">
+          <h2 id="titulo-docs" className="mb-3 text-xl font-semibold">
+            Documentos compartilhados pela escola
+          </h2>
+          {documentosEscola}
         </section>
       )}
     </div>

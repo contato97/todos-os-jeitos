@@ -232,6 +232,16 @@ export const AJUDA_ESCOLA = {
         pergunta: "A escola pode convidar famílias?",
         resposta: "Sim. Pelo aluno, você envia o convite para o e-mail do responsável.",
       },
+      {
+        pergunta: "Como guardo laudos e relatórios do aluno?",
+        resposta:
+          "Na página do aluno, em “Documentos do aluno”: envie a imagem ou o PDF, escreva um resumo, ou os dois. O professor do aluno sempre vê. Você escolhe se a família e os especialistas também veem, e pode mudar depois.",
+      },
+      {
+        pergunta: "Como a escola assina um relatório?",
+        resposta:
+          "Na página do aluno, abaixo de cada relatório ou encaminhamento revisado, clique em “Assinar pela escola”. Fica registrado o nome, o cargo, a data, a hora e um código de verificação, visível para professor, família e especialistas. Depois de assinado, o texto não muda mais.",
+      },
     ],
   },
   especialistas: {

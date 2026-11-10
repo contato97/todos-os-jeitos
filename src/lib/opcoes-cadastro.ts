@@ -170,3 +170,19 @@ export function rotuloBimestre(bimestre: number | null | undefined, ano?: number
 
 // Tipos de profissional que um encaminhamento pode sugerir (sem "outro")
 export const ESPECIALIDADES_ENCAMINHAMENTO = PROFISSOES.filter((p) => p.valor !== "outro");
+
+export function rotuloCargo(valor: string | null | undefined) {
+  return CARGOS.find((c) => c.valor === valor)?.rotulo ?? null;
+}
+
+// Documentos que a escola guarda sobre o aluno
+export const TIPOS_DOCUMENTO_ESCOLA = [
+  { valor: "laudo", rotulo: "Laudo" },
+  { valor: "relatorio_escola", rotulo: "Relatório da escola" },
+  { valor: "relatorio_especialista", rotulo: "Relatório de especialista" },
+  { valor: "outro", rotulo: "Outro documento" },
+] as const;
+
+export function rotuloTipoDocumento(valor: string) {
+  return TIPOS_DOCUMENTO_ESCOLA.find((t) => t.valor === valor)?.rotulo ?? "Documento";
+}

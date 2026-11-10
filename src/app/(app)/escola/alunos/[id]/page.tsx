@@ -4,8 +4,14 @@ import { Suspense } from "react";
 import { Carregando } from "@/components/area/em-breve";
 import { RegistrosEspecialistas, buscarRegistrosEspecialistas } from "@/components/area/registros-especialistas";
 import { ListaEncaminhamentos } from "@/components/area/lista-encaminhamentos";
+import { AssinaturasEncaminhamento } from "@/components/area/assinaturas-encaminhamento";
+import { DocumentosEscola } from "@/components/area/documentos-escola";
+import { FormularioAssinarEscola } from "@/components/area/formulario-assinar-escola";
 import { FormularioConvite } from "@/components/area/formulario-convite";
+import { FormularioDocumentoEscola } from "@/components/area/formulario-documento-escola";
 import { Cartao, Vazio, formatarData } from "@/components/ui";
+import { buscarUsuario } from "@/lib/auth";
+import { rotuloBimestre } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { convidarFamilia } from "../../../acoes-convite";
 
@@ -31,14 +37,23 @@ export default function AlunoEscola({ params }: PageProps<"/escola/alunos/[id]">
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await criarClienteServidor();
-  const [{ data: aluno }, { data: atividades }, { data: relatorios }, orientacoes] = await Promise.all([
+  const usuario = await buscarUsuario();
+  const [{ data: aluno }, { data: atividades }, { data: relatorios }, orientacoes, { data: escola }] = await Promise.all([
     supabase.from("alunos").select("*").eq("id", id).maybeSingle(),
     supabase.from("atividades").select("id, titulo, atualizado_em").eq("aluno_id", id).order("atualizado_em", { ascending: false }),
-    supabase.from("relatorios").select("id, periodo_inicio, periodo_fim").eq("aluno_id", id).order("periodo_fim", { ascending: false }),
+    supabase
+      .from("relatorios")
+      .select(
+        "id, periodo_inicio, periodo_fim, bimestre, ano_letivo, relatorio_assinaturas(id, nome_assinante, papel, cargo, conteudo_sha256, assinado_em)",
+      )
+      .eq("aluno_id", id)
+      .order("periodo_fim", { ascending: false }),
     // A escola recebe so as orientacoes; informacoes clinicas o RLS nao entrega
     buscarRegistrosEspecialistas(supabase, id),
+    supabase.from("escolas").select("id").eq("responsavel_id", usuario?.id ?? "").maybeSingle(),
   ]);
   if (!aluno) notFound();
+  const nomeAssinante = usuario?.nome ?? "";
 
   return (
     <>
@@ -96,27 +111,37 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
             {!relatorios?.length ? (
               <p className="mt-2">Nenhum ainda.</p>
             ) : (
-              <ul className="mt-2 space-y-2">
-                {relatorios.map((r) => (
-                  <li key={r.id} className="flex flex-wrap justify-between gap-2">
-                    <span>
-                      {formatarData(r.periodo_inicio)} a {formatarData(r.periodo_fim)}
-                    </span>
-                    <span className="flex gap-3">
-                      <Link href={`/imprimir/relatorio/${r.id}?versao=familia`} target="_blank" className="underline underline-offset-4">
-                        Família
-                      </Link>
-                      <Link href={`/imprimir/relatorio/${r.id}?versao=tecnica`} target="_blank" className="underline underline-offset-4">
-                        Técnico
-                      </Link>
-                    </span>
-                  </li>
-                ))}
+              <ul className="mt-2 divide-y divide-marca/10">
+                {relatorios.map((r) => {
+                  const assinaturas = r.relatorio_assinaturas ?? [];
+                  return (
+                    <li key={r.id} className="py-3">
+                      <div className="flex flex-wrap justify-between gap-2">
+                        <span className="font-medium">
+                          {rotuloBimestre(r.bimestre, r.ano_letivo) ? `${rotuloBimestre(r.bimestre, r.ano_letivo)} · ` : ""}
+                          {formatarData(r.periodo_inicio)} a {formatarData(r.periodo_fim)}
+                        </span>
+                        <span className="flex gap-3">
+                          <Link href={`/imprimir/relatorio/${r.id}?versao=familia`} target="_blank" className="underline underline-offset-4">
+                            Família
+                          </Link>
+                          <Link href={`/imprimir/relatorio/${r.id}?versao=tecnica`} target="_blank" className="underline underline-offset-4">
+                            Técnico
+                          </Link>
+                        </span>
+                      </div>
+                      <AssinaturasEncaminhamento assinaturas={assinaturas} />
+                      {!assinaturas.some((a) => a.papel === "escola") && (
+                        <FormularioAssinarEscola documento="relatorio" id={r.id} nomeSugerido={nomeAssinante} />
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Cartao>
 
-          <ListaEncaminhamentos alunoId={id} />
+          <ListaEncaminhamentos alunoId={id} escolaAssina={nomeAssinante} />
 
           {orientacoes.length > 0 && (
             <section aria-labelledby="titulo-esp" className="space-y-3">
@@ -128,11 +153,28 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
           )}
         </div>
 
-        <Cartao className="h-fit">
-          <h2 className="text-xl font-semibold">Convidar a família</h2>
-          <p className="mb-4 mt-1">A família recebe um link e dá o consentimento no primeiro acesso.</p>
-          <FormularioConvite acao={convidarFamilia.bind(null, id)} comParentesco rotuloBotao="Criar convite" />
-        </Cartao>
+        <div className="min-w-0 space-y-6">
+          <Cartao>
+            <h2 className="text-xl font-semibold">Documentos do aluno</h2>
+            <p className="mb-4 mt-1">
+              Laudos e relatórios da escola ou de especialistas: envie a imagem ou o PDF, ou escreva o que dizem.
+            </p>
+            {escola ? (
+              <FormularioDocumentoEscola escolaId={escola.id} alunoId={id} />
+            ) : (
+              <p>Escola não encontrada.</p>
+            )}
+            <div className="mt-6">
+              <DocumentosEscola alunoId={id} gerenciar />
+            </div>
+          </Cartao>
+
+          <Cartao>
+            <h2 className="text-xl font-semibold">Convidar a família</h2>
+            <p className="mb-4 mt-1">A família recebe um link e dá o consentimento no primeiro acesso.</p>
+            <FormularioConvite acao={convidarFamilia.bind(null, id)} comParentesco rotuloBotao="Criar convite" />
+          </Cartao>
+        </div>
       </div>
       {!atividades?.length && !relatorios?.length && (
         <div className="mt-6">

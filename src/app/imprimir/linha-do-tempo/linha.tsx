@@ -9,6 +9,7 @@ export type RelatorioDaLinha = {
   bimestre: number | null;
   ano_letivo: number | null;
   texto: string | null;
+  assinaturas?: string[]; // linhas "Assinado pela escola: ..."
 };
 
 // Do mais antigo para o mais recente: ano letivo, bimestre e data
@@ -50,6 +51,11 @@ export function LinhaDoTempoConteudo({ nome, relatorios }: { nome: string; relat
             </h2>
             <div className="mt-3">
               <TextoFormatado texto={r.texto ?? ""} />
+              {r.assinaturas?.map((a) => (
+                <p key={a} className="mt-3 text-sm">
+                  ✓ {a}
+                </p>
+              ))}
             </div>
           </li>
         ))}

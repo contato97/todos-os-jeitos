@@ -554,5 +554,78 @@ await deveFalhar("depois de assinado NAO pode ser apagado", profA, `delete from 
 confere("assinatura NAO pode ser apagada",
   (await comoUsuario(mae, `delete from encaminhamento_assinaturas returning id`).catch(() => [])).length === 0);
 
+
+// ---------- Escola: documentos do aluno e assinaturas ----------
+console.log("\nEscola: documentos e assinaturas");
+const [doc] = await comoUsuario(escola,
+  `insert into escola_documentos (aluno_id, escola_id, tipo, titulo, texto, arquivo) values ($1, $2, 'laudo', 'Laudo neuro', 'resumo', $3) returning id`,
+  [aluno.id, esc.id, `${esc.id}/${aluno.id}/laudo.pdf`]);
+await deveFalhar("escola NAO cadastra documento de aluno de fora", escola,
+  `insert into escola_documentos (aluno_id, escola_id, tipo, titulo, texto) values ($1, $2, 'laudo', 'x', 'y')`, [alunoB.id, esc.id]);
+await deveFalhar("professor NAO cadastra documento em nome da escola", profA,
+  `insert into escola_documentos (aluno_id, escola_id, tipo, titulo, texto) values ($1, $2, 'laudo', 'x', 'y')`, [aluno.id, esc.id]);
+await deveFalhar("documento sem texto e sem arquivo e recusado", escola,
+  `insert into escola_documentos (aluno_id, escola_id, tipo, titulo) values ($1, $2, 'laudo', 'x')`, [aluno.id, esc.id]);
+confere("professor do aluno ve o documento", (await comoUsuario(profA, `select * from escola_documentos`)).length === 1);
+confere("familia NAO ve sem compartilhar", (await comoUsuario(mae, `select * from escola_documentos`)).length === 0);
+confere("especialista NAO ve sem compartilhar", (await comoUsuario(ana, `select * from escola_documentos`)).length === 0);
+confere("professor B NAO ve", (await comoUsuario(profB, `select * from escola_documentos`)).length === 0);
+await comoUsuario(escola, `update escola_documentos set compartilhar_familia = true, compartilhar_especialistas = true where id = $1`, [doc.id]);
+confere("familia ve depois de compartilhado", (await comoUsuario(mae, `select * from escola_documentos`)).length === 1);
+confere("especialista ve depois de compartilhado", (await comoUsuario(ana, `select * from escola_documentos`)).length === 1);
+confere("professor NAO edita documento da escola",
+  (await comoUsuario(profA, `update escola_documentos set titulo = 'x' returning id`).catch(() => [])).length === 0);
+await comoUsuario(escola, `insert into storage.objects (bucket_id, name) values ('escola-documentos', $1)`, [`${esc.id}/${aluno.id}/laudo.pdf`]);
+confere("escola envia o arquivo para a propria pasta", true);
+await deveFalhar("professor NAO envia arquivo na pasta da escola", profA,
+  `insert into storage.objects (bucket_id, name) values ('escola-documentos', $1)`, [`${esc.id}/${aluno.id}/outro.pdf`]);
+confere("familia abre o arquivo compartilhado",
+  (await comoUsuario(mae, `select * from storage.objects where bucket_id = 'escola-documentos'`)).length === 1);
+confere("professor B NAO abre o arquivo",
+  (await comoUsuario(profB, `select * from storage.objects where bucket_id = 'escola-documentos'`)).length === 0);
+
+// Assinatura da escola em relatorio
+const [relE] = await comoUsuario(profA,
+  `insert into relatorios (aluno_id, periodo_inicio, periodo_fim, versao_familia, versao_tecnica, status) values ($1, '2026-08-01', '2026-09-30', 'fam', 'tec', 'rascunho') returning id`, [aluno.id]);
+await deveFalhar("escola NAO assina rascunho", escola, `select assinar_relatorio($1, 'Diretora Ana')`, [relE.id]);
+await comoUsuario(profA, `update relatorios set status = 'revisado' where id = $1`, [relE.id]);
+await deveFalhar("professor NAO assina como escola", profA, `select assinar_relatorio($1, 'Prof A')`, [relE.id]);
+await deveFalhar("familia NAO assina relatorio", mae, `select assinar_relatorio($1, 'Maria')`, [relE.id]);
+await comoUsuario(escola, `select assinar_relatorio($1, 'Diretora Ana')`, [relE.id]);
+const [assE] = await comoUsuario(profA, `select * from relatorio_assinaturas where relatorio_id = $1`, [relE.id]);
+confere("assinatura guarda o cargo da escola", assE?.cargo === "direcao" && assE?.conteudo_sha256.length === 64);
+confere("familia NAO ve assinatura de relatorio nao compartilhado",
+  (await comoUsuario(mae, `select * from relatorio_assinaturas where relatorio_id = $1`, [relE.id])).length === 0);
+await comoUsuario(profA, `update relatorios set compartilhado_com_familia = true where id = $1`, [relE.id]);
+confere("compartilhar depois de assinado continua livre; familia ve a assinatura",
+  (await comoUsuario(mae, `select * from relatorio_assinaturas where relatorio_id = $1`, [relE.id])).length === 1);
+confere("especialista ve a assinatura", (await comoUsuario(ana, `select * from relatorio_assinaturas where relatorio_id = $1`, [relE.id])).length === 1);
+await deveFalhar("relatorio assinado NAO muda o texto", profA, `update relatorios set versao_familia = 'outro' where id = $1`, [relE.id]);
+await deveFalhar("relatorio assinado NAO volta para rascunho", profA, `update relatorios set status = 'rascunho' where id = $1`, [relE.id]);
+await deveFalhar("relatorio assinado NAO pode ser apagado", profA, `delete from relatorios where id = $1`, [relE.id]);
+await deveFalhar("ninguem grava assinatura de relatorio direto", escola,
+  `insert into relatorio_assinaturas (relatorio_id, assinante_id, nome_assinante, papel, conteudo_sha256) values ($1, $2, 'x x x', 'escola', 'x')`, [relE.id, escola.id]);
+
+// Escola assina o encaminhamento (que a familia ja assinou)
+await comoUsuario(escola, `select assinar_encaminhamento($1, 'Diretora Ana')`, [enc.id]);
+const assEnc = await comoUsuario(mae, `select papel, cargo from encaminhamento_assinaturas where encaminhamento_id = $1 order by assinado_em`, [enc.id]);
+confere("encaminhamento com assinatura da familia e da escola", assEnc.map((a) => a.papel).join() === "familia,escola" && assEnc[1].cargo === "direcao");
+
+
+// ---------- Apagar aluno com documentos assinados (LGPD) ----------
+console.log("\nApagar aluno com documentos assinados");
+const [alunoX] = await comoUsuario(profA, `insert into alunos (nome) values ('Bia') returning id`);
+const [relX] = await comoUsuario(profA,
+  `insert into relatorios (aluno_id, periodo_inicio, periodo_fim, versao_familia, versao_tecnica, status) values ($1, '2026-08-01', '2026-09-30', 'f', 't', 'revisado') returning id`, [alunoX.id]);
+const [encX] = await comoUsuario(profA,
+  `insert into encaminhamentos (aluno_id, motivo, conteudo, status) values ($1, 'm', 'c', 'revisado') returning id`, [alunoX.id]);
+await comoUsuario(escola, `select assinar_relatorio($1, 'Diretora Ana')`, [relX.id]);
+await comoUsuario(escola, `select assinar_encaminhamento($1, 'Diretora Ana')`, [encX.id]);
+await deveFalhar("relatorio assinado sozinho continua protegido", profA, `delete from relatorios where id = $1`, [relX.id]);
+await deveFalhar("encaminhamento assinado sozinho continua protegido", profA, `delete from encaminhamentos where id = $1`, [encX.id]);
+await comoUsuario(profA, `delete from alunos where id = $1`, [alunoX.id]);
+confere("apagar o aluno inteiro apaga tambem o que foi assinado",
+  (await db.query(`select 1 from relatorios where id = $1 union all select 1 from encaminhamentos where id = $2`, [relX.id, encX.id])).rows.length === 0);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

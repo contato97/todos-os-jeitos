@@ -25,7 +25,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string; encaminhamen
   const supabase = await criarClienteServidor();
   const { data: enc } = await supabase
     .from("encaminhamentos")
-    .select("*, encaminhamento_assinaturas(id, nome_assinante, papel, conteudo_sha256, assinado_em)")
+    .select("*, encaminhamento_assinaturas(id, nome_assinante, papel, cargo, conteudo_sha256, assinado_em)")
     .eq("id", encaminhamentoId)
     .maybeSingle();
   if (!enc) notFound();
@@ -45,7 +45,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string; encaminhamen
           {assinado ? (
             <>
               <p className="mb-5 rounded-xl bg-salvia/20 p-4">
-                <strong>Assinado pela família.</strong> O texto ficou travado para manter fiel o que foi assinado.
+                <strong>Documento assinado.</strong> O texto ficou travado para manter fiel o que foi assinado.
               </p>
               <TextoFormatado texto={enc.conteudo ?? ""} />
               {enc.especialidades.length > 0 && (
@@ -76,7 +76,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string; encaminhamen
             <div className="mt-2 flex flex-wrap gap-2">
               {revisado ? <Etiqueta tipo="revisado">Revisado</Etiqueta> : <Etiqueta tipo="rascunho">Rascunho</Etiqueta>}
               {assinado ? (
-                <Etiqueta tipo="compartilhado">Assinado pela família</Etiqueta>
+                <Etiqueta tipo="compartilhado">Assinado</Etiqueta>
               ) : (
                 enc.compartilhado_com_familia && <Etiqueta tipo="casa">Aguardando assinatura</Etiqueta>
               )}

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { ComoUsar } from "@/components/area/como-usar";
 import { Carregando } from "@/components/area/em-breve";
 import { RegistrosEspecialistas, buscarRegistrosEspecialistas } from "@/components/area/registros-especialistas";
+import { DocumentosEscola } from "@/components/area/documentos-escola";
 import { Aviso } from "@/components/formulario";
 import { BOTAO_SECUNDARIO, Cartao, formatarData } from "@/components/ui";
 import { AJUDA_PROFESSOR } from "@/lib/ajuda";
@@ -144,6 +145,7 @@ async function Conteudo({
               <RegistrosEspecialistas registros={registrosEsp} />
             </section>
           )}
+<section aria-labelledby="titulo-docs-escola" className="space-y-3">            <h2 id="titulo-docs-escola" className="text-lg font-semibold">              Documentos da escola            </h2>            <DocumentosEscola alunoId={id} />          </section>
         </div>
 
         <div className="space-y-4">

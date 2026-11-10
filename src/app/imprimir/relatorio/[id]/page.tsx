@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { cabecalhoDoAluno, periodoDoRelatorio } from "../../cabecalho";
+import { assinaturasDosRelatorios, cabecalhoDoAluno, periodoDoRelatorio } from "../../cabecalho";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { Documento } from "../../documento";
 
@@ -34,7 +34,10 @@ async function Conteudo({
   if (relatorio) {
     if (relatorio.status !== "revisado") notFound();
     const aluno = Array.isArray(relatorio.alunos) ? relatorio.alunos[0] : relatorio.alunos;
-    const cabecalho = await cabecalhoDoAluno(supabase, relatorio.aluno_id);
+    const [cabecalho, assinaturas] = await Promise.all([
+      cabecalhoDoAluno(supabase, relatorio.aluno_id),
+      assinaturasDosRelatorios(supabase, [id]),
+    ]);
     return (
       <Documento
         {...cabecalho}
@@ -42,17 +45,20 @@ async function Conteudo({
         subtitulo={`${aluno?.nome ?? ""} · ${periodoDoRelatorio(relatorio)}`}
         texto={(tecnica ? relatorio.versao_tecnica : relatorio.versao_familia) ?? ""}
         rodape={tecnica ? "Documento técnico, compartilhado com autorização da família." : undefined}
-      />
+      >
+        <BlocoAssinaturas linhas={assinaturas.get(id)} />
+      </Documento>
     );
   }
 
   // Familia: so a versao acolhedora, pela funcao que nunca devolve a tecnica
   const alunoId = typeof busca.aluno === "string" ? busca.aluno : null;
   if (!alunoId || tecnica) notFound();
-  const [{ data: daFamilia }, { data: aluno }, cabecalho] = await Promise.all([
+  const [{ data: daFamilia }, { data: aluno }, cabecalho, assinaturas] = await Promise.all([
     supabase.rpc("relatorios_para_familia", { p_aluno: alunoId }),
     supabase.from("alunos").select("nome").eq("id", alunoId).maybeSingle(),
     cabecalhoDoAluno(supabase, alunoId),
+    assinaturasDosRelatorios(supabase, [id]),
   ]);
   const r = (daFamilia as RelatorioFamilia[] | null)?.find((x) => x.id === id);
   if (!r) notFound();
@@ -62,7 +68,9 @@ async function Conteudo({
       titulo="Relatório de acompanhamento"
       subtitulo={`${aluno?.nome ? `${aluno.nome} · ` : ""}${periodoDoRelatorio(r)}`}
       texto={r.versao_familia ?? ""}
-    />
+    >
+      <BlocoAssinaturas linhas={assinaturas.get(id)} />
+    </Documento>
   );
 }
 
@@ -74,3 +82,17 @@ type RelatorioFamilia = {
   ano_letivo: number | null;
   versao_familia: string | null;
 };
+
+// Assinaturas da escola no fim do relatorio impresso
+function BlocoAssinaturas({ linhas }: { linhas?: string[] }) {
+  if (!linhas?.length) return null;
+  return (
+    <section aria-label="Assinaturas" className="mt-10 break-inside-avoid border-t border-marca/20 pt-4">
+      {linhas.map((l) => (
+        <p key={l} className="text-sm">
+          ✓ {l}
+        </p>
+      ))}
+    </section>
+  );
+}

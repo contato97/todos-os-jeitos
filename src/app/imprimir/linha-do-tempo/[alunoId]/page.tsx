@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { buscarUsuario } from "@/lib/auth";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { cabecalhoDoAluno } from "../../cabecalho";
+import { assinaturasDosRelatorios, cabecalhoDoAluno } from "../../cabecalho";
 import { Documento } from "../../documento";
 import { LinhaDoTempoConteudo, anosLetivos, ordenarRelatorios, type RelatorioDaLinha } from "../linha";
 
@@ -55,7 +55,11 @@ async function Conteudo({
       .eq("status", "revisado");
     relatorios = (data ?? []).map((r) => ({ ...r, texto: tecnica ? r.versao_tecnica : r.versao_familia }));
   }
-  relatorios = ordenarRelatorios(relatorios);
+  const assinaturas = await assinaturasDosRelatorios(
+    supabase,
+    relatorios.map((r) => r.id),
+  );
+  relatorios = ordenarRelatorios(relatorios.map((r) => ({ ...r, assinaturas: assinaturas.get(r.id) })));
   const anos = anosLetivos(relatorios);
 
   return (

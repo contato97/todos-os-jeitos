@@ -1,7 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { urlDoLogo } from "@/lib/foto";
-import { rotuloBimestre } from "@/lib/opcoes-cadastro";
+import { rotuloBimestre, rotuloCargo } from "@/lib/opcoes-cadastro";
+import { codigoVerificacao } from "@/components/area/assinaturas-encaminhamento";
 import { formatarData } from "@/components/ui";
 
 // Logo e nome da escola para o topo dos documentos do aluno.
@@ -22,4 +23,22 @@ export function periodoDoRelatorio(r: {
   const datas = `${formatarData(r.periodo_inicio)} a ${formatarData(r.periodo_fim)}`;
   const bimestre = rotuloBimestre(r.bimestre, r.ano_letivo);
   return bimestre ? `${bimestre} · ${datas}` : datas;
+}
+
+// Assinaturas da escola nos relatorios, em texto para os documentos impressos
+// (o RLS so devolve as dos relatorios que a pessoa pode ver)
+export async function assinaturasDosRelatorios(supabase: SupabaseClient, ids: string[]) {
+  if (!ids.length) return new Map<string, string[]>();
+  const { data } = await supabase
+    .from("relatorio_assinaturas")
+    .select("relatorio_id, nome_assinante, cargo, conteudo_sha256, assinado_em")
+    .in("relatorio_id", ids)
+    .order("assinado_em");
+  const mapa = new Map<string, string[]>();
+  for (const a of data ?? []) {
+    const cargo = rotuloCargo(a.cargo);
+    const texto = `Assinado pela escola: ${a.nome_assinante}${cargo ? ` (${cargo})` : ""} em ${formatarData(a.assinado_em, true)} · código ${codigoVerificacao(a.conteudo_sha256)}`;
+    mapa.set(a.relatorio_id, [...(mapa.get(a.relatorio_id) ?? []), texto]);
+  }
+  return mapa;
 }

@@ -26,7 +26,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string; encaminhamen
   const { data: enc } = await supabase
     .from("encaminhamentos")
     .select(
-      "id, conteudo, especialidades, created_at, encaminhamento_assinaturas(id, assinante_id, nome_assinante, papel, conteudo_sha256, assinado_em)",
+      "id, conteudo, especialidades, created_at, encaminhamento_assinaturas(id, assinante_id, nome_assinante, papel, cargo, conteudo_sha256, assinado_em)",
     )
     .eq("id", encaminhamentoId)
     .eq("aluno_id", id)
