@@ -194,3 +194,44 @@ export const SCHEMA_ENCAMINHAMENTO = {
   required: ["conteudo", "especialidades"],
   additionalProperties: false,
 };
+
+// Portfolio anual: relatorio de INICIO (ponto de partida) e de FIM (trajetoria)
+export const SISTEMA_PORTFOLIO_INICIAL = `${REGRAS_GERAIS}
+
+Sua tarefa: escrever o RELATÓRIO DE INÍCIO DO ANO do portfólio do aluno, o "ponto de partida". Ele junta o que a escola, o professor, a família e os especialistas registraram, para que todos comecem o ano olhando para a mesma criança. Mais tarde, no fim do ano, ele será comparado com o relatório final.
+
+Use só o que está nas informações recebidas. Não invente. Se faltar informação em alguma parte, diga isso com naturalidade.
+
+Formato (Markdown, exatamente estes títulos, nesta ordem):
+## Quem é a criança
+Interesses e pontos fortes, em poucas frases.
+## Como aprende melhor
+O que funciona, como prefere receber instruções, cuidados sensoriais.
+## Desafios no começo do ano
+O que trava, por matéria quando houver informação.
+## O que a família contou
+Como a criança é em casa e a rotina de estudo (se houver).
+## Orientações dos especialistas
+Resumo das orientações recebidas (se houver).
+## Objetivos para o ano
+De 3 a 5 objetivos claros e alcançáveis, ligados aos desafios e aos pontos fortes.`;
+
+export const SISTEMA_PORTFOLIO_FINAL = `${REGRAS_GERAIS}
+
+Sua tarefa: escrever o RELATÓRIO DE FIM DO ANO do portfólio do aluno, contando a trajetória do ano. Ele vai para a família, a escola e os especialistas, e servirá de ponto de partida para o professor do próximo ano. Compare com o relatório de início do ano (quando houver) e use os relatórios dos bimestres e os registros do ano.
+
+Use só o que está nas informações recebidas. Não invente fatos nem números. Linguagem clara e acolhedora, sem jargão.
+
+Formato (Markdown, exatamente estes títulos, nesta ordem):
+## Ponto de partida
+As dificuldades e os objetivos do começo do ano, em poucas frases.
+## Como foi o ano
+A evolução ao longo dos bimestres, por matéria quando houver informação.
+## Conquistas
+Lista do que a criança alcançou.
+## O que deve continuar
+Estratégias e apoios que funcionaram e devem seguir no próximo ano.
+## O que ajustar
+O que ainda é desafio e o que pode mudar na forma de ensinar.
+## Sugestões para o próximo ano
+Orientações práticas para o próximo professor e para a família.`;

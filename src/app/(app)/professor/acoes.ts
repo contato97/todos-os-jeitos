@@ -9,12 +9,15 @@ import { ErroArquivo, LIMITE_ARQUIVOS, LIMITE_TOTAL, prepararArquivo, type Arqui
 import { ErroIA, perguntarIA } from "@/lib/ia/cliente";
 import { mencionaDiagnostico, AVISO_DIAGNOSTICO } from "@/lib/ia/diagnostico";
 import { casaParaIA } from "@/lib/ia/casa";
+import { semNome } from "@/lib/ia/sem-nome";
 import { creditosPorPaginas, paginasDeTexto } from "@/lib/ia/precos";
 import {
   SCHEMA_ENCAMINHAMENTO,
   SCHEMA_RELATORIO,
   SISTEMA_ADAPTAR,
   SISTEMA_ENCAMINHAMENTO,
+  SISTEMA_PORTFOLIO_FINAL,
+  SISTEMA_PORTFOLIO_INICIAL,
   SISTEMA_RELATORIO,
   descreverPerfil,
 } from "@/lib/ia/prompts";
@@ -553,4 +556,159 @@ export async function apagarEncaminhamento(encaminhamentoId: string, alunoId: st
   // Se ja foi assinado, o banco nao deixa apagar (fica para a pasta do aluno)
   await supabase.from("encaminhamentos").delete().eq("id", encaminhamentoId);
   redirect(`/professor/alunos/${alunoId}/encaminhamentos`);
+}
+
+// ---------------------------------------------------------------- Portfolio anual
+
+type TipoPortfolio = "inicial" | "final";
+
+const ROTULO_COMO_FOI: Record<string, string> = { facil: "fácil", medio: "médio", dificil: "difícil" };
+
+// Junta o que a IA precisa para o relatorio inicial ou final do ano.
+// Textos escritos por pessoas passam por semNome (a IA nunca recebe o nome).
+async function materialDoPortfolio(supabase: Awaited<ReturnType<typeof criarClienteServidor>>, alunoId: string, ano: number, tipo: TipoPortfolio) {
+  const inicioAno = `${ano}-01-01`;
+  const fimAno = `${ano}-12-31`;
+  const { data: aluno } = await supabase.from("alunos").select("*").eq("id", alunoId).maybeSingle();
+  if (!aluno) return null;
+  const nome = aluno.nome as string;
+  const casa = await casaParaIA(supabase, alunoId);
+
+  const [{ data: orientacoes }, { data: observacoes }] = await Promise.all([
+    supabase
+      .from("especialista_registros")
+      .select("texto, created_at")
+      .eq("aluno_id", alunoId)
+      .eq("tipo", "orientacao")
+      .lte("created_at", `${fimAno}T23:59:59`)
+      .order("created_at")
+      .limit(20),
+    supabase
+      .from("observacoes")
+      .select("texto, data_observacao, origem, materia")
+      .eq("aluno_id", alunoId)
+      .gte("data_observacao", inicioAno)
+      .lte("data_observacao", fimAno)
+      .order("data_observacao", { ascending: tipo === "inicial" })
+      .limit(40),
+  ]);
+
+  const linhasObs = (observacoes ?? [])
+    .map((o) => `- ${o.data_observacao} (${o.origem === "casa" ? "relato da família" : "escola"}${o.materia ? `, ${o.materia}` : ""}): ${semNome(o.texto, nome)}`)
+    .join("\n");
+  const linhasOrient = (orientacoes ?? []).map((o) => `- ${semNome(o.texto, nome)}`).join("\n");
+
+  const partes = [
+    `Ano letivo: ${ano}`,
+    `Perfil do aluno:\n${descreverPerfil(aluno, casa)}`,
+    linhasOrient ? `Orientações dos especialistas:\n${linhasOrient}` : "Orientações dos especialistas: nenhuma registrada.",
+  ];
+
+  if (tipo === "inicial") {
+    partes.push(linhasObs ? `Primeiras observações do ano:\n${linhasObs}` : "Ainda não há observações neste ano.");
+    return { texto: partes.join("\n\n") };
+  }
+
+  // Final: relatorio inicial, relatorios do ano e o que foi feito
+  const [{ data: inicial }, { data: relatorios }, { count: atividades }, { data: feitas }, { data: encaminhamentos }] =
+    await Promise.all([
+      supabase.from("portfolio_relatorios").select("conteudo").eq("aluno_id", alunoId).eq("ano_letivo", ano).eq("tipo", "inicial").maybeSingle(),
+      supabase
+        .from("relatorios")
+        .select("periodo_inicio, periodo_fim, bimestre, versao_tecnica")
+        .eq("aluno_id", alunoId)
+        .eq("status", "revisado")
+        .gte("periodo_fim", inicioAno)
+        .lte("periodo_inicio", fimAno)
+        .order("periodo_inicio"),
+      supabase
+        .from("atividades")
+        .select("*", { count: "exact", head: true })
+        .eq("aluno_id", alunoId)
+        .eq("status", "revisado")
+        .gte("created_at", inicioAno)
+        .lte("created_at", `${fimAno}T23:59:59`),
+      supabase
+        .from("reforco_realizacoes")
+        .select("como_foi")
+        .eq("aluno_id", alunoId)
+        .gte("feita_em", inicioAno)
+        .lte("feita_em", `${fimAno}T23:59:59`),
+      supabase.from("encaminhamentos").select("especialidades").eq("aluno_id", alunoId).eq("status", "revisado"),
+    ]);
+
+  const contagem = (feitas ?? []).reduce<Record<string, number>>((t, f) => {
+    if (f.como_foi) t[f.como_foi] = (t[f.como_foi] ?? 0) + 1;
+    return t;
+  }, {});
+  const resumoReforco = Object.entries(contagem)
+    .map(([k, n]) => `${n} ${ROTULO_COMO_FOI[k] ?? k}`)
+    .join(", ");
+
+  partes.push(
+    inicial?.conteudo ? `Relatório de início do ano:\n${semNome(inicial.conteudo, nome)}` : "Não há relatório de início do ano.",
+    relatorios?.length
+      ? `Relatórios do ano:\n${relatorios
+          .map(
+            (r) =>
+              `### ${r.bimestre ? `${r.bimestre}º bimestre` : `${r.periodo_inicio} a ${r.periodo_fim}`}\n${semNome((r.versao_tecnica ?? "").slice(0, 4000), nome)}`,
+          )
+          .join("\n\n")}`
+      : "Não há relatórios revisados neste ano.",
+    `Registros do ano: ${atividades ?? 0} atividades adaptadas revisadas; ${feitas?.length ?? 0} atividades de reforço feitas em casa na plataforma${resumoReforco ? ` (como foi: ${resumoReforco})` : ""}.`,
+    encaminhamentos?.length
+      ? `Encaminhamentos feitos para avaliação com: ${[...new Set(encaminhamentos.flatMap((e) => e.especialidades))].join(", ") || "não especificado"}.`
+      : "Nenhum encaminhamento no ano.",
+    linhasObs ? `Observações mais recentes:\n${linhasObs}` : "",
+  );
+  return { texto: partes.filter(Boolean).join("\n\n") };
+}
+
+export async function gerarPortfolio(alunoId: string, ano: number, tipo: TipoPortfolio): Promise<EstadoFormulario> {
+  if (!Number.isInteger(ano) || ano < 2020 || ano > 2100) return { erro: "Ano letivo inválido." };
+  const supabase = await criarClienteServidor();
+  const material = await materialDoPortfolio(supabase, alunoId, ano, tipo);
+  if (!material) return { erro: "Aluno não encontrado." };
+
+  let conteudo: string;
+  try {
+    conteudo = await perguntarIA({
+      sistema: tipo === "inicial" ? SISTEMA_PORTFOLIO_INICIAL : SISTEMA_PORTFOLIO_FINAL,
+      registro: { acao: "portfolio", paginas: 0, creditos: 1 },
+      conteudo: [{ type: "text", text: material.texto }],
+    });
+  } catch (e) {
+    return { erro: e instanceof ErroIA ? e.message : "Erro ao gerar o relatório do portfólio." };
+  }
+
+  // Gerar de novo substitui o rascunho (e volta para rascunho, para revisar)
+  const { data: existente } = await supabase
+    .from("portfolio_relatorios")
+    .select("id")
+    .eq("aluno_id", alunoId)
+    .eq("ano_letivo", ano)
+    .eq("tipo", tipo)
+    .maybeSingle();
+  const { error } = existente
+    ? await supabase.from("portfolio_relatorios").update({ conteudo, status: "rascunho" }).eq("id", existente.id)
+    : await supabase.from("portfolio_relatorios").insert({ aluno_id: alunoId, ano_letivo: ano, tipo, conteudo });
+  if (error) return { erro: "Não foi possível salvar o rascunho." };
+  refresh();
+  return { sucesso: "Rascunho pronto. Revise antes de liberar para a família e a escola." };
+}
+
+export async function salvarPortfolio(portfolioId: string, _: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
+  const conteudo = lerCampo(formData, "conteudo");
+  const acao = lerCampo(formData, "acao"); // salvar | revisar | reabrir
+  if (!conteudo) return { erro: "O relatório não pode ficar vazio." };
+  const status = acao === "revisar" ? "revisado" : acao === "reabrir" ? "rascunho" : lerCampo(formData, "status");
+
+  const supabase = await criarClienteServidor();
+  const { error } = await supabase.from("portfolio_relatorios").update({ conteudo, status }).eq("id", portfolioId);
+  if (error) return { erro: "Não foi possível salvar." };
+  refresh();
+  return {
+    sucesso: status === "revisado" ? "Revisado! Escola, família e especialistas já podem ver no portfólio." : "Rascunho salvo.",
+    aviso: mencionaDiagnostico(conteudo) ? AVISO_DIAGNOSTICO : undefined,
+  };
 }

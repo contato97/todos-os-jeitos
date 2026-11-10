@@ -1,6 +1,7 @@
 import "server-only";
 import { ErroIA, perguntarIA } from "@/lib/ia/cliente";
 import { SCHEMA_MODERACAO, SISTEMA_MODERACAO } from "@/lib/ia/prompts";
+import { semNome } from "@/lib/ia/sem-nome";
 
 export type ResultadoModeracao =
   | { liberada: true; revisadaPorIA: boolean }
@@ -26,17 +27,6 @@ const TERMOS_OFENSIVOS = [
   /\bvai se f/i,
   /\bcala a boca/i,
 ];
-
-// Troca o nome da crianca antes de mandar para a IA (a IA nunca recebe o nome)
-function semNome(texto: string, nomeAluno: string) {
-  const partes = nomeAluno
-    .split(/\s+/)
-    .filter((p) => p.length > 2)
-    .map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  if (!partes.length) return texto;
-  // Sem \b: ele nao entende acentos ("Lúcia"). Usamos "nao e letra" antes e depois.
-  return texto.replace(new RegExp(`(^|[^\\p{L}])(${partes.join("|")})(?=[^\\p{L}]|$)`, "giu"), "$1[criança]");
-}
 
 export async function moderarMensagem(texto: string, nomeAluno: string): Promise<ResultadoModeracao> {
   try {

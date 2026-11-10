@@ -653,5 +653,28 @@ await deveFalhar("reforco de um aluno NAO vale para outro aluno", mae,
 confere("professor NAO edita a atividade feita",
   (await comoUsuario(profA, `update reforco_realizacoes set como_foi = 'dificil' returning id`).catch(() => [])).length === 0);
 
+
+// ---------- Portfolio anual ----------
+console.log("\nPortfolio anual");
+const [port] = await comoUsuario(profA,
+  `insert into portfolio_relatorios (aluno_id, ano_letivo, tipo, conteudo) values ($1, 2026, 'inicial', 'ponto de partida') returning id`, [aluno.id]);
+await deveFalhar("o mesmo ano NAO tem dois relatorios iniciais", profA,
+  `insert into portfolio_relatorios (aluno_id, ano_letivo, tipo, conteudo) values ($1, 2026, 'inicial', 'x')`, [aluno.id]);
+await deveFalhar("professor B NAO cria portfolio de aluno alheio", profB,
+  `insert into portfolio_relatorios (aluno_id, ano_letivo, tipo, conteudo) values ($1, 2026, 'final', 'x')`, [aluno.id]);
+await deveFalhar("tipo fora da lista e recusado", profA,
+  `insert into portfolio_relatorios (aluno_id, ano_letivo, tipo) values ($1, 2026, 'meio')`, [aluno.id]);
+confere("familia NAO ve rascunho do portfolio", (await comoUsuario(mae, `select * from portfolio_relatorios`)).length === 0);
+confere("escola NAO ve rascunho do portfolio", (await comoUsuario(escola, `select * from portfolio_relatorios`)).length === 0);
+await comoUsuario(profA, `update portfolio_relatorios set status = 'revisado' where id = $1`, [port.id]);
+confere("familia ve o portfolio revisado", (await comoUsuario(mae, `select * from portfolio_relatorios`)).length === 1);
+confere("escola ve o portfolio revisado", (await comoUsuario(escola, `select * from portfolio_relatorios`)).length === 1);
+confere("especialista ve o portfolio revisado", (await comoUsuario(ana, `select * from portfolio_relatorios`)).length === 1);
+confere("professor B NAO ve", (await comoUsuario(profB, `select * from portfolio_relatorios`)).length === 0);
+confere("familia NAO edita o portfolio",
+  (await comoUsuario(mae, `update portfolio_relatorios set conteudo = 'x' returning id`).catch(() => [])).length === 0);
+confere("escola NAO edita o portfolio",
+  (await comoUsuario(escola, `update portfolio_relatorios set conteudo = 'x' returning id`).catch(() => [])).length === 0);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);
