@@ -133,6 +133,7 @@ export async function pedirApoio(alunoId: string, _: EstadoFormulario, formData:
   try {
     resposta = await perguntarIA({
       sistema: SISTEMA_REFORCO,
+      registro: { acao: "reforco", paginas: temArquivo ? 1 : 0, creditos: 1 },
       conteudo: [
         ...anexos,
         {

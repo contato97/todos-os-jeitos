@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { registrarUso, type RegistroUso } from "./uso";
 
 // Cliente da API do Claude. A chave vem SO da variavel de ambiente ANTHROPIC_API_KEY
 // (lida automaticamente pelo SDK) e nunca chega ao navegador: este arquivo e "server-only".
@@ -14,11 +15,14 @@ export async function perguntarIA({
   sistema,
   conteudo,
   formatoJson,
+  registro,
 }: {
   sistema: string;
   conteudo: Conteudo;
   // Quando informado, a resposta segue exatamente este formato (JSON Schema)
   formatoJson?: Record<string, unknown>;
+  // Para o registro de custo e creditos (ver uso.ts)
+  registro: RegistroUso;
 }): Promise<string> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new ErroIA("A IA ainda não está configurada (falta a ANTHROPIC_API_KEY no .env.local).");
@@ -61,15 +65,17 @@ export async function perguntarIA({
     throw erro;
   }
 
-  if (resposta.stop_reason === "refusal") {
-    throw new ErroIA("A IA não pôde atender este pedido. Tente reformular o texto.");
-  }
-
   const texto = resposta.content
     .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
     .map((b) => b.text)
     .join("\n")
     .trim();
+  // Toda chamada respondida e cobrada pela Anthropic, mesmo recusada: registramos todas
+  await registrarUso(registro, resposta, resposta.stop_reason !== "refusal" && Boolean(texto));
+
+  if (resposta.stop_reason === "refusal") {
+    throw new ErroIA("A IA não pôde atender este pedido. Tente reformular o texto.");
+  }
   if (!texto) throw new ErroIA("A IA respondeu vazio. Tente de novo.");
   return texto;
 }

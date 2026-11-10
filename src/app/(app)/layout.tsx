@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { AvisoAreaErrada } from "@/components/area/aviso-area-errada";
+import { BotaoSuporte } from "@/components/area/botao-suporte";
 import { Avatar } from "@/components/avatar";
 import { BotaoTema } from "@/components/botao-tema";
 import { Logo } from "@/components/logo";
@@ -8,7 +9,7 @@ import { AREA_DO_PERFIL, buscarUsuario } from "@/lib/auth";
 import { urlDaFoto } from "@/lib/foto";
 import { sair } from "../(auth)/actions";
 
-// Moldura das areas logadas (professor, escola, familia)
+// Moldura das areas logadas (professor, escola, familia, especialista)
 export default function LayoutLogado({ children }: LayoutProps<"/">) {
   return (
     <>
@@ -27,13 +28,15 @@ export default function LayoutLogado({ children }: LayoutProps<"/">) {
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+      {/* pb-24: espaco para o botao de suporte nao cobrir o fim da pagina */}
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-10 pb-24">
         {/* Le o endereco (?aviso=...), por isso fica dentro do Suspense */}
         <Suspense>
           <AvisoAreaErrada />
         </Suspense>
         {children}
       </main>
+      <BotaoSuporte />
     </>
   );
 }

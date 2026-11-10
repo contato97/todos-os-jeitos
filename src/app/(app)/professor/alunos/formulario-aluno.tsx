@@ -17,6 +17,7 @@ export type DadosAluno = Partial<
     | "o_que_trava"
     | "comunicacao"
     | "sensorial"
+    | "resumo_laudos"
     | "saude",
     string | null
   >
@@ -28,7 +29,10 @@ const ETAPAS = [
   { titulo: "Quem é o aluno", descricao: "O básico para identificar." },
   { titulo: "Como aprende", descricao: "O coração do perfil vivo: escreva com exemplos do dia a dia." },
   { titulo: "Comunicação e sentidos", descricao: "Como receber instruções e o que incomoda no ambiente." },
-  { titulo: "Saúde (opcional)", descricao: "Só você vê, inclusive os documentos anexados. Nada daqui é enviado para a IA." },
+  {
+    titulo: "Saúde e laudos (opcional)",
+    descricao: "As informações de saúde e os documentos anexados só você vê e nunca vão para a IA. No fim, um resumo pedagógico ajuda a IA a adaptar.",
+  },
 ];
 
 export function FormularioAluno({ aluno, modo }: { aluno?: DadosAluno; modo: "novo" | "editar" }) {
@@ -113,6 +117,21 @@ export function FormularioAluno({ aluno, modo }: { aluno?: DadosAluno; modo: "no
           dica="Só registre o que a família compartilhou (por exemplo, um laudo). Nunca suposições." />
         {/* Na edicao, os documentos ficam na pagina do aluno (com lista e opcao de apagar) */}
         {emEtapas && <CampoDocumentos />}
+
+        {/* Diferente da saude acima: este resumo VAI para a IA (sem o nome e sem diagnostico) */}
+        <div className="rounded-2xl border-2 border-petroleo/30 bg-petroleo/5 p-4">
+          <AreaTexto
+            rotulo="Resumo pedagógico dos laudos e relatórios (vai para a IA)"
+            name="resumo_laudos"
+            defaultValue={v("resumo_laudos")}
+            rows={4}
+            maxLength={3000}
+            dica="Escreva com suas palavras o que os laudos indicam para a sala de aula e o que você observa no dia a dia. Sem nomes de diagnóstico. Ex.: precisa de enunciados curtos e apoio visual; cansa em atividades longas; rende melhor com pausas."
+          />
+          <p className="mt-2 text-base">
+            Só este resumo ajuda a IA a adaptar as atividades. Os laudos e as informações de saúde acima continuam só com você.
+          </p>
+        </div>
       </fieldset>
 
       <div className="flex flex-wrap gap-3">

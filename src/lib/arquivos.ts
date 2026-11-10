@@ -1,7 +1,9 @@
 import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 import mammoth from "mammoth";
+import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
+import { paginasDeTexto } from "@/lib/ia/precos";
 
 // Prepara os arquivos enviados pelo professor para a IA:
 // - fotos (JPG, PNG, WEBP, HEIC...) -> reduzidas para no maximo 2000 px em JPEG
@@ -31,6 +33,8 @@ type Bloco = Anthropic.Beta.BetaContentBlockParam;
 export type ArquivoPreparado = {
   nome: string;
   blocos: Bloco[];
+  // Quantas paginas o arquivo tem (conta os creditos de IA)
+  paginas: number;
   // O que guardar no Storage (formato aceito pelo bucket)
   guardar: { bytes: Buffer; tipo: string; extensao: string };
 };
@@ -49,6 +53,7 @@ export async function prepararArquivo(arquivo: File): Promise<ArquivoPreparado> 
     return {
       nome,
       blocos: [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: bytes.toString("base64") }, title: nome }],
+      paginas: await contarPaginasPdf(bytes),
       guardar: { bytes, tipo: "application/pdf", extensao: "pdf" },
     };
   }
@@ -59,6 +64,7 @@ export async function prepararArquivo(arquivo: File): Promise<ArquivoPreparado> 
     return {
       nome,
       blocos: [{ type: "text", text: `Conteúdo do arquivo Word “${nome}”:\n${value.trim()}` }],
+      paginas: Math.max(1, paginasDeTexto(value)),
       guardar: { bytes, tipo: DOCX, extensao: "docx" },
     };
   }
@@ -68,6 +74,7 @@ export async function prepararArquivo(arquivo: File): Promise<ArquivoPreparado> 
     return {
       nome,
       blocos: [{ type: "text", text: `Conteúdo do arquivo “${nome}”:\n${texto}` }],
+      paginas: Math.max(1, paginasDeTexto(texto)),
       guardar: { bytes, tipo: "text/plain", extensao: "txt" },
     };
   }
@@ -86,6 +93,7 @@ export async function prepararArquivo(arquivo: File): Promise<ArquivoPreparado> 
     return {
       nome,
       blocos: [{ type: "image", source: { type: "base64", media_type: "image/jpeg", data: jpeg.toString("base64") } }],
+      paginas: 1,
       guardar: { bytes: jpeg, tipo: "image/jpeg", extensao: "jpg" },
     };
   }
@@ -94,4 +102,14 @@ export async function prepararArquivo(arquivo: File): Promise<ArquivoPreparado> 
     throw new ErroArquivo(`“${nome}” está no formato antigo do Word (.doc). Salve como .docx ou PDF e envie de novo.`);
   }
   throw new ErroArquivo(`O formato de “${nome}” não é aceito. Envie foto, PDF, Word (.docx) ou texto (.txt).`);
+}
+
+// PDF protegido ou com defeito: conta 1 pagina por megabyte (aproximacao segura)
+async function contarPaginasPdf(bytes: Buffer) {
+  try {
+    const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false });
+    return Math.max(1, pdf.getPageCount());
+  } catch {
+    return Math.max(1, Math.ceil(bytes.length / (1024 * 1024)));
+  }
 }

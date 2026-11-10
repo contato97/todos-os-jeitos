@@ -12,6 +12,7 @@ export type PerfilAluno = {
   o_que_trava?: string | null;
   comunicacao?: string | null;
   sensorial?: string | null;
+  resumo_laudos?: string | null;
 };
 
 // O perfil enviado a IA: SEM nome e SEM informacoes de saude (minimizacao de dados, LGPD)
@@ -29,6 +30,7 @@ export function descreverPerfil(p: PerfilAluno, casa: string[] = []) {
     p.o_que_trava && `O que trava: ${p.o_que_trava}`,
     p.comunicacao && `Como prefere receber instruções: ${p.comunicacao}`,
     p.sensorial && `Sensibilidades sensoriais: ${p.sensorial}`,
+    p.resumo_laudos && `O que os laudos e relatórios indicam para a sala (resumo pedagógico do professor): ${p.resumo_laudos}`,
     ...casa,
   ].filter(Boolean);
   return linhas.length ? linhas.join("\n") : "Perfil ainda pouco preenchido.";

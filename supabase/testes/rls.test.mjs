@@ -415,5 +415,35 @@ confere("cada um le o proprio WhatsApp pela funcao",
   (await comoUsuario(profC, `select meu_whatsapp() as w`))[0]?.w === "11999998888");
 await deveFalhar("visitante nao chama meu_whatsapp", null, `select meu_whatsapp()`);
 
+
+// ---------- Resumo pedagogico dos laudos ----------
+console.log("\nResumo dos laudos");
+confere("professor escreve o resumo pedagogico",
+  (await comoUsuario(profA, `update alunos set resumo_laudos = 'enunciados curtos' where id = $1 returning id`, [aluno.id])).length === 1);
+confere("familia NAO edita o resumo",
+  (await comoUsuario(mae, `update alunos set resumo_laudos = 'x' where id = $1 returning id`, [aluno.id]).catch(() => [])).length === 0);
+await deveFalhar("resumo maior que 3000 caracteres e recusado", profA,
+  `update alunos set resumo_laudos = repeat('a', 3001) where id = $1`, [aluno.id]);
+
+
+// ---------- Registro de uso da IA ----------
+console.log("\nUso da IA");
+await comoUsuario(profA, `insert into ia_uso (acao, modelo, sucesso, paginas, creditos, tokens_entrada, tokens_saida, custo_usd)
+  values ('adaptar', 'claude-opus-5', true, 6, 3, 14000, 7000, 0.245)`);
+confere("professor ve o proprio uso", (await comoUsuario(profA, `select * from ia_uso`)).length === 1);
+confere("professor B NAO ve o uso de A", (await comoUsuario(profB, `select * from ia_uso`)).length === 0);
+confere("escola NAO ve o uso do professor", (await comoUsuario(escola, `select * from ia_uso`)).length === 0);
+await deveFalhar("ninguem registra uso em nome de outro", profB,
+  `insert into ia_uso (usuario_id, acao, modelo, sucesso) values ($1, 'adaptar', 'x', true)`, [profA.id]);
+confere("NAO da para apagar uso (devolver creditos)",
+  (await comoUsuario(profA, `delete from ia_uso returning id`).catch(() => [])).length === 0);
+confere("NAO da para editar creditos",
+  (await comoUsuario(profA, `update ia_uso set creditos = 0 returning id`).catch(() => [])).length === 0);
+await deveFalhar("acao desconhecida e recusada", profA, `insert into ia_uso (acao, modelo, sucesso) values ('chat', 'x', true)`);
+await deveFalhar("visitante NAO registra uso", null, `insert into ia_uso (acao, modelo, sucesso) values ('adaptar', 'x', true)`);
+await deveFalhar("professor NAO le o resumo de custos da equipe", profA, `select * from privado.ia_custo_mensal`);
+confere("resumo de custos soma certo (equipe)",
+  Number((await db.query(`select custo_total_usd from privado.ia_custo_mensal`)).rows[0]?.custo_total_usd) === 0.25);
+
 console.log(`\nResultado: ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

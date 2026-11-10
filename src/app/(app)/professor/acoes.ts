@@ -9,6 +9,7 @@ import { ErroArquivo, LIMITE_ARQUIVOS, LIMITE_TOTAL, prepararArquivo, type Arqui
 import { ErroIA, perguntarIA } from "@/lib/ia/cliente";
 import { mencionaDiagnostico, AVISO_DIAGNOSTICO } from "@/lib/ia/diagnostico";
 import { casaParaIA } from "@/lib/ia/casa";
+import { creditosPorPaginas, paginasDeTexto } from "@/lib/ia/precos";
 import { SCHEMA_RELATORIO, SISTEMA_ADAPTAR, SISTEMA_RELATORIO, descreverPerfil } from "@/lib/ia/prompts";
 import { lerCampo, type EstadoFormulario } from "@/lib/formulario";
 import { PRIORIDADES_ADAPTACAO } from "@/lib/opcoes-cadastro";
@@ -22,6 +23,7 @@ const CAMPOS_PERFIL = [
   "o_que_trava",
   "comunicacao",
   "sensorial",
+  "resumo_laudos",
 ] as const;
 
 // ---------------------------------------------------------------- Alunos
@@ -35,6 +37,13 @@ export async function salvarAluno(_: EstadoFormulario, formData: FormData): Prom
   for (const c of CAMPOS_PERFIL) valores[c] = lerCampo(formData, c);
 
   if (!nome) return { erro: "Informe o nome do aluno.", valores };
+  // O resumo vai para a IA: por isso nao pode ter nome de diagnostico (minimizacao, LGPD)
+  if (mencionaDiagnostico(valores.resumo_laudos)) {
+    return {
+      erro: "O resumo dos laudos vai para a IA, então não pode ter nomes de diagnóstico (como TEA, TDAH, dislexia, transtorno, síndrome). Descreva as necessidades e o que ajuda em sala. Ex.: “precisa de enunciados curtos e apoio visual”.",
+      valores,
+    };
+  }
 
   const dados: Record<string, string | null> = { nome, data_nascimento: dataNascimento || null };
   for (const c of CAMPOS_PERFIL) dados[c] = valores[c] || null;
@@ -184,10 +193,14 @@ export async function adaptarAtividade(
     .filter(Boolean)
     .join("\n\n");
 
+  // Creditos: 1 a cada 2 paginas (fotos, paginas do PDF, Word e texto colado)
+  const paginas = preparados.reduce((t, p) => t + p.paginas, 0) + paginasDeTexto(texto);
+
   let adaptado: string;
   try {
     adaptado = await perguntarIA({
       sistema: SISTEMA_ADAPTAR,
+      registro: { acao: "adaptar", paginas, creditos: creditosPorPaginas(paginas) },
       conteudo: [
         ...preparados.flatMap((p) => p.blocos),
         {
@@ -329,6 +342,7 @@ export async function gerarRelatorio(
   try {
     const json = await perguntarIA({
       sistema: SISTEMA_RELATORIO,
+      registro: { acao: "relatorio", paginas: 0, creditos: 1 },
       formatoJson: SCHEMA_RELATORIO,
       conteudo: [
         {

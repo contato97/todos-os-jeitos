@@ -18,6 +18,7 @@ const SECOES = [
   { campo: "o_que_trava", titulo: "O que trava" },
   { campo: "comunicacao", titulo: "Como prefere receber instruções" },
   { campo: "sensorial", titulo: "Sensibilidades sensoriais" },
+  { campo: "resumo_laudos", titulo: "O que os laudos indicam para a sala" },
 ] as const;
 
 export default function AlunoDoEspecialista({ params }: PageProps<"/especialista/alunos/[id]">) {
@@ -35,7 +36,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   const [{ data: aluno }, { data: vinculo }, { data: relatorios }, registros] = await Promise.all([
     supabase
       .from("alunos")
-      .select("nome, ano_escolar, interesses, pontos_fortes, o_que_funciona, o_que_trava, comunicacao, sensorial, professor_id")
+      .select("nome, ano_escolar, interesses, pontos_fortes, o_que_funciona, o_que_trava, comunicacao, sensorial, resumo_laudos, professor_id")
       .eq("id", id)
       .maybeSingle(),
     supabase

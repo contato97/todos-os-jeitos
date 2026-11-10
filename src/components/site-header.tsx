@@ -8,10 +8,12 @@ import Link from "next/link";
 import { useState } from "react";
 
 const secoes = [
-  { id: "quem-somos", rotulo: "Quem somos" },
+  // "/#..." (e nao so "#..."): assim os links funcionam tambem fora da pagina inicial, como em /planos
+  { href: "/#quem-somos", rotulo: "Quem somos" },
   // "Como funciona" leva ao desafio, que abre a historia: o problema e depois a nossa proposta.
-  { id: "desafio", rotulo: "Como funciona" },
-  { id: "para-quem", rotulo: "Para quem é" },
+  { href: "/#desafio", rotulo: "Como funciona" },
+  { href: "/#para-quem", rotulo: "Para quem é" },
+  { href: "/planos", rotulo: "Planos" },
 ];
 
 export function SiteHeader() {
@@ -29,8 +31,8 @@ export function SiteHeader() {
         <nav aria-label="Seções da página" className="hidden lg:block">
           <ul className="flex gap-1">
             {secoes.map((s) => (
-              <li key={s.id}>
-                <a href={`#${s.id}`} className="whitespace-nowrap rounded-full px-3 py-2 hover:bg-marca/5">
+              <li key={s.href}>
+                <a href={s.href} className="whitespace-nowrap rounded-full px-3 py-2 hover:bg-marca/5">
                   {s.rotulo}
                 </a>
               </li>
@@ -69,8 +71,8 @@ export function SiteHeader() {
         <nav id="menu-celular" aria-label="Menu" className="border-t border-marca/10 px-4 pb-6 lg:hidden">
           <ul className="flex flex-col py-2">
             {secoes.map((s) => (
-              <li key={s.id}>
-                <a href={`#${s.id}`} onClick={fechar} className="block rounded-lg px-2 py-3">
+              <li key={s.href}>
+                <a href={s.href} onClick={fechar} className="block rounded-lg px-2 py-3">
                   {s.rotulo}
                 </a>
               </li>

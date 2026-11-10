@@ -19,6 +19,7 @@ const SECOES = [
   { campo: "o_que_trava", titulo: "O que trava" },
   { campo: "comunicacao", titulo: "Como prefere receber instruções" },
   { campo: "sensorial", titulo: "Sensibilidades sensoriais" },
+  { campo: "resumo_laudos", titulo: "O que os laudos indicam para a sala" },
 ] as const;
 
 export default function PerfilVivo({ params, searchParams }: PageProps<"/professor/alunos/[id]">) {

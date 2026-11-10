@@ -15,6 +15,7 @@ const SECOES = [
   ["o_que_trava", "O que trava"],
   ["comunicacao", "Como prefere receber instruções"],
   ["sensorial", "Sensibilidades sensoriais"],
+  ["resumo_laudos", "O que os laudos indicam para a sala"],
 ] as const;
 
 // Ficha do aluno para a escola: so leitura, sem saude e sem observacoes
