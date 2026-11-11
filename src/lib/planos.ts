@@ -70,7 +70,7 @@ export const PLANOS: Plano[] = [
   {
     id: "mestre",
     nome: "Mestre",
-    publico: "Para várias turmas ou AEE",
+    publico: "Várias turmas ou AEE",
     resumo: "Para quem acompanha muitos alunos.",
     precoMensal: 79.9,
     creditos: 80,

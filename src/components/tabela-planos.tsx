@@ -16,8 +16,6 @@ import {
 // "use client": a troca entre mensal e anual acontece no navegador, sem recarregar
 export function TabelaPlanos() {
   const [ciclo, setCiclo] = useState<Ciclo>("mensal");
-  const individuais = PLANOS.filter((p) => !p.sobConsulta);
-  const escola = PLANOS.find((p) => p.sobConsulta);
 
   return (
     <>
@@ -40,40 +38,12 @@ export function TabelaPlanos() {
         ))}
       </div>
 
-      <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {individuais.map((p) => (
+      {/* Os 5 planos lado a lado no computador (a Escola e "sob consulta") */}
+      <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {PLANOS.map((p) => (
           <CartaoPlano key={p.id} plano={p} ciclo={ciclo} />
         ))}
       </ul>
-
-      {escola && (
-        <div className="mt-6 flex flex-col gap-6 rounded-2xl bg-marca p-6 text-creme sm:p-8 lg:flex-row lg:items-center">
-          <div className="lg:w-1/3">
-            <p className="text-base font-medium">{escola.publico}</p>
-            <h3 className="text-2xl font-semibold">{escola.nome}</h3>
-            <p className="mt-1">{escola.resumo}</p>
-            <p className="mt-3 text-xl font-semibold">Sob consulta</p>
-          </div>
-          <ul className="grid flex-1 gap-2 sm:grid-cols-2">
-            {escola.itens.map((item) => (
-              <li key={item} className="flex gap-2">
-                <span aria-hidden="true" className="font-semibold">
-                  ✓
-                </span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-          <a
-            href={linkWhatsapp("Olá! Quero conhecer o plano Escola da Todos os Jeitos.")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 rounded-full bg-creme px-6 py-3 text-center font-medium text-marca hover:bg-white focus-visible:outline-creme"
-          >
-            Falar com um especialista
-          </a>
-        </div>
-      )}
 
       <p className="mx-auto mt-8 max-w-3xl text-center text-base">
         1 crédito = até 2 páginas. Adaptar uma folha usa 1 crédito; uma prova de 6 páginas usa 3. Os créditos renovam todo
@@ -86,16 +56,21 @@ export function TabelaPlanos() {
 function CartaoPlano({ plano: p, ciclo }: { plano: Plano; ciclo: Ciclo }) {
   const preco = precoDoCiclo(p, ciclo);
   return (
-    <li className={`flex flex-col rounded-2xl bg-white/80 p-6 ring-1 ${p.destaque ? "ring-2 ring-petroleo" : "ring-marca/10"}`}>
-      {p.destaque && (
-        <span className="mb-3 w-fit rounded-full bg-petroleo/15 px-3 py-1 text-base font-medium">Mais escolhido</span>
-      )}
+    <li className={`flex flex-col rounded-2xl bg-white/80 p-5 ring-1 ${p.destaque ? "ring-2 ring-petroleo" : "ring-marca/10"}`}>
+      {/* Faixa do selo em todos os cartoes, para os titulos ficarem alinhados */}
+      <div className="mb-2 h-8">
+        {p.destaque && (
+          <span className="inline-block rounded-full bg-petroleo/15 px-3 py-1 text-base font-medium">Mais escolhido</span>
+        )}
+      </div>
       <p className="text-base font-medium">{p.publico}</p>
       <h3 className="text-2xl font-semibold">{p.nome}</h3>
       <p className="mt-1 text-base">{p.resumo}</p>
 
       <div className="mt-5 min-h-20">
-        {preco === 0 ? (
+        {p.sobConsulta ? (
+          <p className="text-2xl font-semibold">Sob consulta</p>
+        ) : preco === 0 ? (
           <p className="text-3xl font-semibold">Grátis</p>
         ) : (
           <>
@@ -120,7 +95,16 @@ function CartaoPlano({ plano: p, ciclo }: { plano: Plano; ciclo: Ciclo }) {
       </ul>
 
       <div className="mt-6">
-        {preco === 0 ? (
+        {p.sobConsulta ? (
+          <a
+            href={linkWhatsapp("Olá! Quero conhecer o plano Escola da Todos os Jeitos.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-full px-5 py-3 text-center font-medium ring-2 ring-marca"
+          >
+            Falar com um especialista
+          </a>
+        ) : preco === 0 ? (
           <Link href="/cadastro" className="block rounded-full px-5 py-3 text-center font-medium ring-2 ring-marca">
             Começar grátis
           </Link>
@@ -138,3 +122,4 @@ function CartaoPlano({ plano: p, ciclo }: { plano: Plano; ciclo: Ciclo }) {
     </li>
   );
 }
+
