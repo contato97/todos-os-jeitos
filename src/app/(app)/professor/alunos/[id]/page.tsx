@@ -41,7 +41,15 @@ async function Conteudo({
   const { id } = await params;
   const { novo, editar, aviso } = await searchParams;
   const supabase = await criarClienteServidor();
-  const [{ data: aluno }, { data: saude }, { count: obsCount }, { count: ativCount }, { data: documentos }, { data: fichasCasa }, registrosEsp] = await Promise.all([
+  const [
+    { data: aluno },
+    { data: saude },
+    { count: obsCount },
+    { count: ativCount },
+    { data: documentos },
+    { data: fichasCasa },
+    registrosEsp,
+  ] = await Promise.all([
     supabase.from("alunos").select("*").eq("id", id).maybeSingle(),
     supabase.from("alunos_saude").select("informacoes").eq("aluno_id", id).maybeSingle(),
     supabase.from("observacoes").select("*", { count: "exact", head: true }).eq("aluno_id", id),
@@ -53,7 +61,9 @@ async function Conteudo({
       .order("created_at", { ascending: false }),
     supabase
       .from("aluno_casa")
-      .select("familia_id, como_em_casa, rotina_estudo, medicacoes, acompanhamentos, outras, atualizado_em, perfis(nome)")
+      .select(
+        "familia_id, como_em_casa, rotina_estudo, medicacoes, acompanhamentos, outras, atualizado_em, perfis(nome)",
+      )
       .eq("aluno_id", id),
     buscarRegistrosEspecialistas(supabase, id),
   ]);
@@ -61,7 +71,10 @@ async function Conteudo({
 
   // Links temporarios (10 min) para abrir os documentos do bucket privado
   const { data: links } = documentos?.length
-    ? await supabase.storage.from("documentos").createSignedUrls(documentos.map((d) => d.caminho), 600)
+    ? await supabase.storage.from("documentos").createSignedUrls(
+        documentos.map((d) => d.caminho),
+        600,
+      )
     : { data: [] };
   const linkDe = new Map((links ?? []).map((l) => [l.path, l.signedUrl]));
 
@@ -85,7 +98,9 @@ async function Conteudo({
       <ComoUsar secao={AJUDA_PROFESSOR.perfil} />
       {aviso === "documento" && (
         <div className="mb-4">
-          <Aviso tipo="erro">O aluno foi cadastrado, mas um documento não pôde ser anexado. Tente de novo no cartão “Saúde”.</Aviso>
+          <Aviso tipo="erro">
+            O aluno foi cadastrado, mas um documento não pôde ser anexado. Tente de novo no cartão “Saúde”.
+          </Aviso>
         </div>
       )}
       {novo && (
@@ -145,7 +160,14 @@ async function Conteudo({
               <RegistrosEspecialistas registros={registrosEsp} />
             </section>
           )}
-<section aria-labelledby="titulo-docs-escola" className="space-y-3">            <h2 id="titulo-docs-escola" className="text-lg font-semibold">              Documentos da escola            </h2>            <DocumentosEscola alunoId={id} />          </section>
+          <section aria-labelledby="titulo-docs-escola" className="space-y-3">
+            {" "}
+            <h2 id="titulo-docs-escola" className="text-lg font-semibold">
+              {" "}
+              Documentos da escola{" "}
+            </h2>{" "}
+            <DocumentosEscola alunoId={id} />{" "}
+          </section>
         </div>
 
         <div className="space-y-4">
@@ -198,12 +220,19 @@ async function Conteudo({
                     {d.descricao && <p className="text-base">{d.descricao}</p>}
                     <p className="text-sm">
                       {d.tipo === "application/pdf" ? "PDF" : d.tipo.startsWith("image/") ? "Foto" : "Word"} ·{" "}
-                      {d.tamanho > 1048576 ? `${(d.tamanho / 1048576).toFixed(1)} MB` : `${Math.ceil(d.tamanho / 1024)} KB`} ·{" "}
-                      {formatarData(d.created_at)}
+                      {d.tamanho > 1048576
+                        ? `${(d.tamanho / 1048576).toFixed(1)} MB`
+                        : `${Math.ceil(d.tamanho / 1024)} KB`}{" "}
+                      · {formatarData(d.created_at)}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-3">
                       {linkDe.get(d.caminho) && (
-                        <a href={linkDe.get(d.caminho)!} target="_blank" rel="noopener noreferrer" className="text-base underline underline-offset-4">
+                        <a
+                          href={linkDe.get(d.caminho)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-base underline underline-offset-4"
+                        >
                           Abrir
                         </a>
                       )}

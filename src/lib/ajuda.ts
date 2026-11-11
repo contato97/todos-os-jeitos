@@ -79,8 +79,7 @@ export const AJUDA_PROFESSOR = {
       },
       {
         pergunta: "A família vê o que eu escrevo?",
-        resposta:
-          "Só as observações que você marcar como “compartilhar com a família”. As outras ficam só com você.",
+        resposta: "Só as observações que você marcar como “compartilhar com a família”. As outras ficam só com você.",
       },
       {
         pergunta: "O que são as observações “de casa”?",
@@ -126,6 +125,11 @@ export const AJUDA_PROFESSOR = {
         resposta:
           "Não. A IA descreve o que foi observado e nunca sugere diagnósticos: isso é papel dos profissionais de saúde.",
       },
+      {
+        pergunta: "O que é o portfólio?",
+        resposta:
+          "Na aba “Portfólio” do aluno, cada ano letivo tem um relatório de início (ponto de partida) e um de fim (trajetória e próximos passos), que a IA prepara e você revisa. No meio, aparecem os relatórios dos bimestres e o que foi feito. Depois de revisado, escola, família e especialistas veem e podem imprimir. Fica guardado ano a ano.",
+      },
     ],
   },
   encaminhamentos: {
@@ -163,11 +167,31 @@ export const AJUDA_PROFESSOR = {
       },
       {
         pergunta: "Onde vejo o que a família contou de casa?",
-        resposta: "Na mesma tela, em “O que chegou de casa”, e também no perfil de cada aluno, com a etiqueta “De casa”.",
+        resposta:
+          "Na mesma tela, em “O que chegou de casa”, e também no perfil de cada aluno, com a etiqueta “De casa”.",
       },
     ],
   },
-conversa: {    titulo: "Conversa com a família",    perguntas: [      {        pergunta: "Por que o recado passa por uma revisão?",        resposta:          "Para a conversa ser sempre respeitosa, dos dois lados. Antes de sair, a inteligência artificial confere se o recado tem ofensas ou desrespeito. Críticas e preocupações ditas com respeito passam normalmente.",      },      {        pergunta: "E se o recado for segurado?",        resposta:          "Ele não é enviado nem guardado. Aparece o motivo e uma sugestão reescrita: você pode usar a sugestão, ajustar e enviar de novo.",      },      {        pergunta: "Quem lê a conversa?",        resposta:          "Só você e as famílias conectadas ao aluno. A coordenação e os especialistas não veem. O nome do aluno é trocado por “[criança]” antes da revisão da IA.",      },    ],  },
+  conversa: {
+    titulo: "Conversa com a família",
+    perguntas: [
+      {
+        pergunta: "Por que o recado passa por uma revisão?",
+        resposta:
+          "Para a conversa ser sempre respeitosa, dos dois lados. Antes de sair, a inteligência artificial confere se o recado tem ofensas ou desrespeito. Críticas e preocupações ditas com respeito passam normalmente.",
+      },
+      {
+        pergunta: "E se o recado for segurado?",
+        resposta:
+          "Ele não é enviado nem guardado. Aparece o motivo e uma sugestão reescrita: você pode usar a sugestão, ajustar e enviar de novo.",
+      },
+      {
+        pergunta: "Quem lê a conversa?",
+        resposta:
+          "Só você e as famílias conectadas ao aluno. A coordenação e os especialistas não veem. O nome do aluno é trocado por “[criança]” antes da revisão da IA.",
+      },
+    ],
+  },
   familia: {
     titulo: "Convidar família",
     perguntas: [
@@ -294,7 +318,16 @@ export const AJUDA_FAMILIA = {
         resposta:
           "O professor escolhe o que compartilhar. Anotações rápidas do dia a dia da sala podem ficar só com ele.",
       },
-      {        pergunta: "Como levo os relatórios a uma consulta?",        resposta:          "Em Relatórios, clique em “Baixar linha do tempo”. Abre um documento com todos os relatórios em ordem de bimestre. Clique em Imprimir ou escolha “Salvar como PDF”.",      },
+      {
+        pergunta: "Como levo os relatórios a uma consulta?",
+        resposta:
+          "Em Relatórios, clique em “Baixar linha do tempo”. Abre um documento com todos os relatórios em ordem de bimestre. Clique em Imprimir ou escolha “Salvar como PDF”.",
+      },
+      {
+        pergunta: "O que é o portfólio?",
+        resposta:
+          "Na aba “Portfólio”, você vê o ano do seu filho: como ele começou, os relatórios de cada bimestre, as atividades feitas e, no fim, a trajetória com as conquistas e as sugestões para o próximo ano. Dá para imprimir e guardar.",
+      },
     ],
   },
   observacoes: {
@@ -311,7 +344,21 @@ export const AJUDA_FAMILIA = {
       },
     ],
   },
-conversa: {    titulo: "Conversa com o professor",    perguntas: [      {        pergunta: "Como funciona a conversa?",        resposta:          "Você escreve para o professor do seu filho e ele responde por aqui. Se a família tiver mais de uma pessoa conectada, todos veem a mesma conversa.",      },      {        pergunta: "Por que o recado passa por uma revisão?",        resposta:          "Para a conversa ser respeitosa dos dois lados. Se o recado tiver algo que possa ofender, ele não é enviado e aparece uma sugestão para reescrever. Críticas e preocupações ditas com respeito passam normalmente.",      },    ],  },
+  conversa: {
+    titulo: "Conversa com o professor",
+    perguntas: [
+      {
+        pergunta: "Como funciona a conversa?",
+        resposta:
+          "Você escreve para o professor do seu filho e ele responde por aqui. Se a família tiver mais de uma pessoa conectada, todos veem a mesma conversa.",
+      },
+      {
+        pergunta: "Por que o recado passa por uma revisão?",
+        resposta:
+          "Para a conversa ser respeitosa dos dois lados. Se o recado tiver algo que possa ofender, ele não é enviado e aparece uma sugestão para reescrever. Críticas e preocupações ditas com respeito passam normalmente.",
+      },
+    ],
+  },
   encaminhamentos: {
     titulo: "Encaminhamentos",
     perguntas: [
@@ -327,7 +374,8 @@ conversa: {    titulo: "Conversa com o professor",    perguntas: [      {       
       },
       {
         pergunta: "Como levo à consulta?",
-        resposta: "Abra o encaminhamento e clique em “Imprimir ou salvar em PDF”. Você pode imprimir ou mostrar no celular.",
+        resposta:
+          "Abra o encaminhamento e clique em “Imprimir ou salvar em PDF”. Você pode imprimir ou mostrar no celular.",
       },
     ],
   },

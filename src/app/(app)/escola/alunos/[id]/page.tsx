@@ -61,6 +61,9 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
         ← Alunos
       </Link>
       <h1 className="mt-4 text-3xl font-semibold">{aluno.nome}</h1>
+      <Link href={`/escola/alunos/${id}/portfolio`} className="mt-2 inline-block font-medium underline underline-offset-4">
+        Ver o portfólio do ano →
+      </Link>
       {aluno.ano_escolar && <p className="mt-1">{aluno.ano_escolar}</p>}
       <p className="mt-2 text-base">Somente leitura. Quem edita é o professor do aluno.</p>
 

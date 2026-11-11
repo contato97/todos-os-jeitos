@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
+import { BOTAO, Cartao, Etiqueta, TextoFormatado, Vazio, formatarData } from "@/components/ui";
 import { hoje } from "@/lib/datas";
 import { rotuloBimestre } from "@/lib/opcoes-cadastro";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -103,6 +103,9 @@ export async function Portfolio({
             </Link>
           ))}
         </nav>
+        <Link href={`/imprimir/portfolio/${alunoId}?ano=${ano}`} target="_blank" className={BOTAO}>
+          Imprimir portfólio {ano}
+        </Link>
       </div>
 
       <SecaoRelatorio
